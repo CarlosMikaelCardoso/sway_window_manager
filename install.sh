@@ -1,21 +1,24 @@
-# --- INÍCIO DO CÓDIGO MODIFICADO: install.sh COM CONTROLE DE MOUSE ---
-
 #!/bin/bash
 
-echo "🚀 Atualizando o instalador com suporte a movimentação de janelas via mouse..."
+# --- INÍCIO DO INSTALL.SH VERSÃO FINAL (FIX) ---
 
-# 1. Instalação de pacotes
+echo "🛠️ Iniciando instalação e correção do ambiente..."
+
+# 1. Garantir que TODOS os pacotes base estão presentes
+# Adicionei o 'dbus-x11' e 'xdg-desktop-portal-wlr' que resolvem o erro de apps não abrirem
 sudo apt update
-sudo apt install -y sway waybar wofi swaybg swayidle swaylock foot wlogout \
+sudo apt install -y sway waybar wofi swaybg swayidle swaylock foot \
     fonts-font-awesome fonts-noto-color-emoji fonts-liberation \
     grim slurp pavucontrol blueman wdisplays network-manager-gnome \
-    zenity pulseaudio-utils
+    zenity pulseaudio-utils dunst dbus-x11 xdg-desktop-portal-wlr
 
-# 2. Estrutura de pastas
-mkdir -p ~/.config/sway ~/.config/waybar ~/.config/foot
+# 2. Criar estrutura de pastas limpa
+mkdir -p ~/.config/sway ~/.config/waybar ~/.config/foot ~/sway
 
-# 3. Gerando ~/.config/sway/config
+# 3. Criar o arquivo de configuração do SWAY
 cat <<EOF > ~/.config/sway/config
+# --- CONFIGURAÇÃO PRODUÇÃO ---
+
 set \$mod Mod4
 set \$term foot
 set \$menu wofi --show drun --allow-images
@@ -23,6 +26,10 @@ set \$menu wofi --show drun --allow-images
 # Cores Ubuntu e Wallpaper
 client.focused #E95420 #E95420 #ffffff #E95420
 output * bg /usr/share/backgrounds/warty-final-ubuntu.png fill
+
+# --- CORREÇÃO DE APPS (D-BUS) ---
+# Isso garante que o sistema saiba que você está no Sway para abrir os apps
+exec dbus-update-activation-environment --all
 
 # --- CONTROLE DE JANELAS (MOUSE) ---
 floating_modifier \$mod
@@ -36,16 +43,17 @@ bindsym \$mod+Shift+c reload
 bindsym \$mod+Shift+e exec swaynag -t warning -m 'Sair?' -b 'Sim' 'swaymsg exit'
 bindsym \$mod+h exec bash ~/sway/help_atalhos.sh
 
+# Barra (Chamada direta para maior estabilidade)
 bar {
     swaybar_command waybar
 }
 
-# Teclado
+# Teclado (BR)
 input "type:keyboard" {
     xkb_layout br
 }
 
-# Configuração de Sensibilidade do Mouse
+# Mouse (Sua sensibilidade ideal)
 input "type:pointer" {
     accel_profile "flat"
     pointer_accel -0.2
@@ -77,19 +85,18 @@ bindsym \$mod+s layout stacking
 bindsym \$mod+w layout tabbed
 bindsym \$mod+e layout toggle split
 
-# Áudio (Fn)
+# Controle de Áudio (Fn)
 bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
 bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
 bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
 
-# Estética
+# Bordas e Gaps
 gaps inner 8
 gaps outer 2
 smart_borders on
 EOF
 
-# 4. Gerando a Waybar (Barra) e Estilo CSS
-# (Mantendo as mesmas configurações que você já validou)
+# 4. Configuração da Waybar
 cat <<EOF > ~/.config/waybar/config
 {
     "layer": "top",
@@ -106,6 +113,7 @@ cat <<EOF > ~/.config/waybar/config
 }
 EOF
 
+# 5. Estilo CSS
 cat <<EOF > ~/.config/waybar/style.css
 * { font-family: "Ubuntu", "Font Awesome 6 Free", sans-serif; font-size: 14px; }
 window#waybar { background-color: rgba(48, 10, 36, 0.95); border-bottom: 2px solid #E95420; color: #ffffff; }
@@ -113,6 +121,12 @@ window#waybar { background-color: rgba(48, 10, 36, 0.95); border-bottom: 2px sol
 #clock, #pulseaudio, #network, #cpu, #memory, #tray { padding: 0 10px; }
 EOF
 
-echo "✅ Script install.sh atualizado com suporte a mouse!"
+# 6. Garantir que o script de ajuda está no lugar certo
+cat <<EOF > ~/sway/help_atalhos.sh
+#!/bin/bash
+TEXTO="<b>ATALHOS:</b>\n• Super+Enter: Terminal\n• Super+D: Menu\n• Super+Q: Fechar\n• Super+H: Ajuda"
+zenity --info --title="Sway Help" --text="\$TEXTO"
+EOF
+chmod +x ~/sway/help_atalhos.sh
 
-# --- FIM DO CÓDIGO MODIFICADO ---
+echo "✅ Instalação concluída. Por favor, reinicie o computador para aplicar as correções de sistema."
