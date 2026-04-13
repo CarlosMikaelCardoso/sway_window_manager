@@ -18,6 +18,8 @@ TEXTO="
 • <b>Super + Setas</b>          → Mudar foco entre janelas
 • <b>Super + Shift + C</b>    → Recarregar Configurações
 • <b>Super + Shift + E</b>    → Menu de Saída (Log out)
+• <b>Super + <Número do Teclado> </b>    → Cria um novo ou muda o workspace
+• <b>Super + Shift + <Número do Teclado> </b>    → Muda o terminal selecionado para o workspace selecionado
 
 <b>CONFIGURAÇÕES (Digite no Terminal):</b>
 • <b>nmtui</b>                  → Configurar Wi-Fi e Rede
