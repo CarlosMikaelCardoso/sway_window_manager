@@ -29,7 +29,7 @@ cat <<EOF > ~/.config/waybar/config
     "on-sigusr1": "toggle",
     "modules-left": ["sway/workspaces", "sway/mode", "custom/win-hide", "custom/win-max", "custom/win-close"],
     "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "network", "cpu", "memory", "tray"],
+    "modules-right": ["pulseaudio", "cpu", "memory", "tray"],
     "sway/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
@@ -83,7 +83,6 @@ window#waybar {
 #workspaces,
 #clock,
 #pulseaudio,
-#network,
 #cpu,
 #memory,
 #custom-win-hide,
@@ -112,6 +111,7 @@ window#waybar {
 #custom-win-hide { color: #f6d365; }
 #custom-win-max { color: #8dd694; }
 #custom-win-close { color: #ff6b6b; }
+#custom-net-speed { color: #8ecae6; }
 
 #custom-win-hide.hidden,
 #custom-win-max.hidden,
@@ -260,7 +260,19 @@ else
 fi
 chmod +x ~/sway/waybar_window_controls.sh
 
-# 10. Correções do VS Code (clipboard/atalhos no Wayland)
+# 10. Script de velocidade de rede na Waybar
+if [ -f "$(dirname "$0")/waybar_net_speed.sh" ]; then
+    SRC_NET="$(readlink -f "$(dirname "$0")/waybar_net_speed.sh")"
+    DST_NET="$(readlink -f ~/sway/waybar_net_speed.sh 2>/dev/null || echo ~/sway/waybar_net_speed.sh)"
+    if [ "$SRC_NET" != "$DST_NET" ]; then
+        cp "$SRC_NET" ~/sway/waybar_net_speed.sh
+    fi
+else
+    echo "⚠️ waybar_net_speed.sh não encontrado no repositório. Módulo de velocidade pode não funcionar."
+fi
+chmod +x ~/sway/waybar_net_speed.sh
+
+# 11. Correções do VS Code (clipboard/atalhos no Wayland)
 mkdir -p ~/.config/Code/User ~/.local/share/applications
 
 cat <<EOF > ~/.config/Code/User/keybindings.json
