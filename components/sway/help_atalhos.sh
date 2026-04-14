@@ -96,11 +96,11 @@ while true; do
 <b>MIDIA (MPD)</b>
 
 • <b>Super + M</b>           → Abrir ncmpcpp
-• <b>Super + Shift + M</b>   → Abrir menu MPD (musicas/playlists)
+• <b>Super + Shift + M</b>   → Abrir popup de controle (estilo dock)
 • <b>Tecla Play/Pause</b>    → Pausar/Retomar
 • <b>Tecla Next/Prev</b>     → Proxima/Anterior
 
-<i>No card de midia:</i> clique abre menu, clique direito abre ncmpcpp, scroll troca faixa.
+<i>No card de midia:</i> clique abre popup dock, clique direito abre ncmpcpp, scroll troca faixa.
 
 <b>CARDS DE JANELA NA WAYBAR</b>
 

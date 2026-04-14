@@ -76,7 +76,7 @@ cat <<EOF > ~/.config/waybar/config
     "custom/media": {
         "return-type": "json",
         "exec": "bash ~/sway/components/waybar/media_mpd.sh",
-        "on-click": "bash ~/sway/components/sway/mpd_menu.sh",
+        "on-click": "bash ~/sway/components/sway/mpd_dock_popup.sh",
         "on-click-right": "foot -e ncmpcpp",
         "on-scroll-up": "mpc next >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
         "on-scroll-down": "mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
@@ -256,7 +256,7 @@ bindsym XF86AudioNext exec sh -c 'mpc next >/dev/null 2>&1; pkill -RTMIN+10 wayb
 bindsym XF86AudioPrev exec sh -c 'mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
 bindsym XF86AudioStop exec sh -c 'mpc stop >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
 bindsym \$mod+m exec foot -e ncmpcpp
-bindsym \$mod+Shift+m exec bash ~/sway/components/sway/mpd_menu.sh
+bindsym \$mod+Shift+m exec bash ~/sway/components/sway/mpd_dock_popup.sh
 
 # Workspaces
 bindsym \$mod+1 workspace number 1
@@ -326,6 +326,7 @@ copy_component "$(dirname "$0")/components/sway/janela_acoes.sh" "$HOME/sway/com
 copy_component "$(dirname "$0")/components/sway/volume_control.sh" "$HOME/sway/components/sway/volume_control.sh"
 copy_component "$(dirname "$0")/components/sway/mpd_picker.sh" "$HOME/sway/components/sway/mpd_picker.sh"
 copy_component "$(dirname "$0")/components/sway/mpd_menu.sh" "$HOME/sway/components/sway/mpd_menu.sh"
+copy_component "$(dirname "$0")/components/sway/mpd_dock_popup.sh" "$HOME/sway/components/sway/mpd_dock_popup.sh"
 
 # 7. Scripts de componentes da Waybar
 copy_component "$(dirname "$0")/components/waybar/window_controls.sh" "$HOME/sway/components/waybar/window_controls.sh"

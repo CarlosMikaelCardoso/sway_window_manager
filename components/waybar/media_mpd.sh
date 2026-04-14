@@ -10,7 +10,7 @@ if ! command -v mpc >/dev/null 2>&1; then
 fi
 
 if ! mpc status >/dev/null 2>&1; then
-    echo '{"text":" MPD off","class":"stopped","tooltip":"MPD desligado\nClique para escolher musicas"}'
+    echo '{"text":" MPD off","class":"stopped","tooltip":"MPD desligado\nClique para abrir controles"}'
     exit 0
 fi
 
@@ -22,7 +22,7 @@ if [ -z "${CURRENT:-}" ]; then
 fi
 
 if [ -z "${CURRENT:-}" ]; then
-    echo '{"text":" Sem musica","class":"stopped","tooltip":"Clique para abrir menu MPD"}'
+    echo '{"text":" Sem musica","class":"stopped","tooltip":"Clique para abrir popup dock"}'
     exit 0
 fi
 
@@ -41,7 +41,7 @@ if [ "${#CURRENT}" -gt 42 ]; then
 fi
 
 TEXT="$ICON $CURRENT"
-TOOLTIP="MPD\n$CURRENT\nClique: menu (musicas e playlists)\nBotao direito: ncmpcpp\nScroll: proxima/anterior"
+TOOLTIP="MPD\n$CURRENT\nClique: popup dock de controle\nBotao direito: ncmpcpp\nScroll: proxima/anterior"
 
 if command -v jq >/dev/null 2>&1; then
     jq -cn --arg text "$TEXT" --arg tooltip "$TOOLTIP" --arg class "$CLASS" '{text:$text, tooltip:$tooltip, class:$class}'
