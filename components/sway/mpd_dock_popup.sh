@@ -37,22 +37,23 @@ STYLE_FILE="/tmp/yad-mpd-dock.css"
 cat > "$STYLE_FILE" <<'CSS'
 * {
     font-family: "Ubuntu", "Font Awesome 6 Free", sans-serif;
-    font-size: 16px;
+    font-size: 17px;
 }
 window, dialog {
-    background: rgba(20, 20, 28, 0.92);
-    border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(20, 20, 28, 0.90);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
 }
 button {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
     color: #f4f4f4;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    padding: 10px 16px;
+    padding: 12px 18px;
+    min-width: 72px;
 }
 button:hover {
-    background: rgba(233, 84, 32, 0.92);
+    background: rgba(233, 84, 32, 0.95);
     color: #ffffff;
 }
 label {
@@ -61,29 +62,40 @@ label {
 CSS
 
 CURRENT="$(mpc current -f '%artist% - %title%' 2>/dev/null || true)"
-if [ -n "${CURRENT:-}" ] && [ "${#CURRENT}" -gt 48 ]; then
-    CURRENT="${CURRENT:0:45}..."
+if [ -z "${CURRENT:-}" ]; then
+    CURRENT="Sem musica tocando"
 fi
 
-PROMPT='MPD Dock'
-if [ -n "${CURRENT:-}" ]; then
-    PROMPT="MPD Dock | $CURRENT"
+if [ -n "${CURRENT:-}" ] && [ "${#CURRENT}" -gt 64 ]; then
+    CURRENT="${CURRENT:0:61}..."
 fi
 
+STATE_LINE="$(mpc status | sed -n '2p' || true)"
+STATE_ICON=""
+if printf '%s' "$STATE_LINE" | grep -q '\[playing\]'; then
+    STATE_ICON=""
+elif printf '%s' "$STATE_LINE" | grep -q '\[paused\]'; then
+    STATE_ICON=""
+fi
+
+TEXT="$STATE_ICON  $CURRENT"
+
+set +e
 yad --center --on-top --undecorated --skip-taskbar --borders=20 \
     --title="MPD Dock" \
-    --text="$PROMPT" \
+    --text="$TEXT" \
     --window-icon="multimedia-player" \
-    --fixed --width=640 --height=170 \
+    --fixed --width=560 --height=165 \
     --css="$STYLE_FILE" \
-    --button="  Anterior:10" \
-    --button="  Play/Pause:20" \
-    --button="  Proxima:30" \
-    --button="  Stop:40" \
-    --button="󰒮  ncmpcpp:50" \
-    --button="Fechar:1"
+    --button=":10" \
+    --button=":20" \
+    --button=":30" \
+    --button=":40" \
+    --button="󰒮:50" \
+    --button="✕:1"
 
 ACTION_CODE=$?
+set -e
 
 case "$ACTION_CODE" in
     10)
