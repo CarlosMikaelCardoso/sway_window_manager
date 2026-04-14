@@ -9,7 +9,7 @@ sudo apt update
 sudo apt install -y waybar wofi \
     fonts-font-awesome fonts-noto-color-emoji fonts-liberation \
     grim slurp pavucontrol blueman wdisplays network-manager-gnome \
-    zenity pulseaudio-utils dunst
+    zenity pulseaudio-utils dunst jq
 
 # 2. Criar pastas de config
 mkdir -p ~/.config/sway
@@ -100,6 +100,44 @@ bindsym \$mod+Shift+c reload
 bindsym \$mod+Shift+e exec swaynag -t warning -m 'Sair?' -b 'Sim' 'swaymsg exit'
 bindsym \$mod+h exec bash ~/sway/help_atalhos.sh
 bindsym \$mod+Ctrl+b exec pkill -USR1 waybar
+bindsym \$mod+a exec bash ~/sway/janela_acoes.sh
+
+# Navegação de janelas (workspace atual)
+bindsym Mod1+Tab exec bash ~/sway/alt_tab_visual.sh next 300
+bindsym Mod1+Shift+Tab exec bash ~/sway/alt_tab_visual.sh prev 300
+bindsym Mod1+ISO_Left_Tab exec bash ~/sway/alt_tab_visual.sh prev 300
+bindsym \$mod+Left focus left
+bindsym \$mod+Right focus right
+bindsym \$mod+Up focus up
+bindsym \$mod+Down focus down
+bindsym \$mod+Shift+Left move left
+bindsym \$mod+Shift+Right move right
+bindsym \$mod+Shift+Up move up
+bindsym \$mod+Shift+Down move down
+
+# Ações de janela (estilo produtividade)
+bindsym \$mod+Shift+space floating toggle
+bindsym \$mod+f fullscreen toggle
+bindsym \$mod+minus move scratchpad
+bindsym \$mod+equal scratchpad show
+
+# Prints de tela
+bindsym Print exec mkdir -p ~/Imagens/prints && grim ~/Imagens/prints/print-\$(date +%Y-%m-%d_%H-%M-%S).png
+bindsym Shift+Print exec mkdir -p ~/Imagens/prints && grim -g "\$(slurp)" ~/Imagens/prints/print-area-\$(date +%Y-%m-%d_%H-%M-%S).png
+bindsym Ctrl+Print exec sh -c 'sleep 3; mkdir -p ~/Imagens/prints; grim ~/Imagens/prints/print-delay-\$(date +%Y-%m-%d_%H-%M-%S).png'
+
+# Workspaces
+bindsym \$mod+1 workspace number 1
+bindsym \$mod+2 workspace number 2
+bindsym \$mod+3 workspace number 3
+bindsym \$mod+4 workspace number 4
+bindsym \$mod+5 workspace number 5
+
+bindsym \$mod+Shift+1 move container to workspace number 1
+bindsym \$mod+Shift+2 move container to workspace number 2
+bindsym \$mod+Shift+3 move container to workspace number 3
+bindsym \$mod+Shift+4 move container to workspace number 4
+bindsym \$mod+Shift+5 move container to workspace number 5
 
 # Iniciar Barra automaticamente
 bar {
@@ -110,6 +148,10 @@ bar {
 input "type:keyboard" {
     xkb_layout br
 }
+
+floating_modifier \$mod normal
+focus_follows_mouse yes
+focus_on_window_activation focus
 
 input "type:pointer" {
     accel_profile "flat"
@@ -130,11 +172,39 @@ EOF
 
 # 6. Script de ajuda de atalhos (fonte única: arquivo do repositório)
 if [ -f "$(dirname "$0")/help_atalhos.sh" ]; then
-    cp "$(dirname "$0")/help_atalhos.sh" ~/sway/help_atalhos.sh
+    SRC_HELP="$(readlink -f "$(dirname "$0")/help_atalhos.sh")"
+    DST_HELP="$(readlink -f ~/sway/help_atalhos.sh 2>/dev/null || echo ~/sway/help_atalhos.sh)"
+    if [ "$SRC_HELP" != "$DST_HELP" ]; then
+        cp "$SRC_HELP" ~/sway/help_atalhos.sh
+    fi
 else
     echo "⚠️ help_atalhos.sh não encontrado no repositório. Mantendo configuração atual."
 fi
 chmod +x ~/sway/help_atalhos.sh
+
+# 7. Script de Alt+Tab visual (fonte única: arquivo do repositório)
+if [ -f "$(dirname "$0")/alt_tab_visual.sh" ]; then
+    SRC_ALT="$(readlink -f "$(dirname "$0")/alt_tab_visual.sh")"
+    DST_ALT="$(readlink -f ~/sway/alt_tab_visual.sh 2>/dev/null || echo ~/sway/alt_tab_visual.sh)"
+    if [ "$SRC_ALT" != "$DST_ALT" ]; then
+        cp "$SRC_ALT" ~/sway/alt_tab_visual.sh
+    fi
+else
+    echo "⚠️ alt_tab_visual.sh não encontrado no repositório. Alt+Tab visual pode não funcionar."
+fi
+chmod +x ~/sway/alt_tab_visual.sh
+
+# 8. Script de ações de janela (fonte única: arquivo do repositório)
+if [ -f "$(dirname "$0")/janela_acoes.sh" ]; then
+    SRC_WIN="$(readlink -f "$(dirname "$0")/janela_acoes.sh")"
+    DST_WIN="$(readlink -f ~/sway/janela_acoes.sh 2>/dev/null || echo ~/sway/janela_acoes.sh)"
+    if [ "$SRC_WIN" != "$DST_WIN" ]; then
+        cp "$SRC_WIN" ~/sway/janela_acoes.sh
+    fi
+else
+    echo "⚠️ janela_acoes.sh não encontrado no repositório. Menu de ações pode não funcionar."
+fi
+chmod +x ~/sway/janela_acoes.sh
 
 echo "✅ Customização aplicada!"
 echo "➡️ Use Super+Shift+C para recarregar no Sway (ou reinicie a sessão)."
