@@ -1,6 +1,4 @@
-# --- INÍCIO DO CÓDIGO ---
 #!/bin/bash
-
 # Popup de controles MPD em estilo dock (macOS / Control Center)
 
 set -euo pipefail
@@ -167,4 +165,3 @@ case "$ACTION_CODE" in
 esac
 
 pkill -RTMIN+10 waybar >/dev/null 2>&1 || true
-# --- FIM DO CÓDIGO ---
