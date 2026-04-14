@@ -82,13 +82,24 @@ if [ -z "$CURRENT_WORKSPACE" ]; then
 fi
 
 # Lista janelas visíveis no workspace atual (id + nome)
-WINDOWS="$(printf '%s' "$TREE_JSON" | jq -r --arg ws "$CURRENT_WORKSPACE" '
+VISIBLE_WINDOWS="$(printf '%s' "$TREE_JSON" | jq -r --arg ws "$CURRENT_WORKSPACE" '
   .. | objects
   | select(.type? == "workspace" and .name? == $ws)
   | .. | objects
   | select((.type? == "con" or .type? == "floating_con") and (.app_id? != null or .window_properties? != null))
-  | [.id, (.name // "Janela sem título")] | @tsv
+    | [.id, (.name // "Janela sem título"), "visible"] | @tsv
 ')"
+
+# Lista janelas escondidas no scratchpad (também entram no Alt+Tab)
+HIDDEN_WINDOWS="$(printf '%s' "$TREE_JSON" | jq -r '
+    .. | objects
+    | select(.type? == "workspace" and .name? == "__i3_scratch")
+    | .. | objects
+    | select((.type? == "con" or .type? == "floating_con") and (.app_id? != null or .window_properties? != null))
+    | [.id, (.name // "Janela sem título"), "hidden"] | @tsv
+')"
+
+WINDOWS="$(printf '%s\n%s\n' "$VISIBLE_WINDOWS" "$HIDDEN_WINDOWS" | sed '/^$/d')"
 
 if [ -z "$WINDOWS" ]; then
     exit 0
@@ -103,7 +114,8 @@ FOCUSED_ID="$(printf '%s' "$TREE_JSON" | jq -r '.. | objects | select(.focused? 
 MENU_ENTRIES="$(printf '%s\n' "$WINDOWS_UNIQ" | awk -F'\t' -v focused="$FOCUSED_ID" '
 {
   prefix = ($1 == focused) ? "● " : "  "
-  print prefix $2 "\t" $1
+    suffix = ($3 == "hidden") ? " [escondida]" : ""
+    print prefix $2 suffix "\t" $1 "\t" $3
 }')"
 
 # Seleção por menu
@@ -119,9 +131,15 @@ if [ -z "$SELECTED_LINE" ]; then
     exit 0
 fi
 
-SELECTED_ID="$(printf '%s\n' "$MENU_ENTRIES" | awk -F'\t' -v sel="$SELECTED_LINE" '$1==sel{print $2; exit}')"
+SELECTED_META="$(printf '%s\n' "$MENU_ENTRIES" | awk -F'\t' -v sel="$SELECTED_LINE" '$1==sel{print $2 "\t" $3; exit}')"
+SELECTED_ID="$(printf '%s' "$SELECTED_META" | cut -f1)"
+SELECTED_STATE="$(printf '%s' "$SELECTED_META" | cut -f2)"
 
 if [ -n "$SELECTED_ID" ]; then
+    if [ "$SELECTED_STATE" = "hidden" ]; then
+        swaymsg "[con_id=$SELECTED_ID] scratchpad show" >/dev/null
+    fi
+
     swaymsg "[con_id=$SELECTED_ID] focus" >/dev/null
 
     # Para janelas flutuantes, força trazer para frente de forma consistente.

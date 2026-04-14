@@ -29,7 +29,7 @@ cat <<EOF > ~/.config/waybar/config
     "on-sigusr1": "toggle",
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "network", "cpu", "memory", "tray"],
+    "modules-right": ["pulseaudio", "network", "cpu", "memory", "custom/win-hide", "custom/win-max", "custom/win-close", "tray"],
     "sway/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
@@ -45,6 +45,24 @@ cat <<EOF > ~/.config/waybar/config
         "format-icons": {
             "default": ["", "", ""]
         }
+    },
+    "custom/win-hide": {
+        "return-type": "json",
+        "exec": "bash ~/sway/waybar_window_controls.sh status hide",
+        "on-click": "bash ~/sway/waybar_window_controls.sh action hide",
+        "interval": 1
+    },
+    "custom/win-max": {
+        "return-type": "json",
+        "exec": "bash ~/sway/waybar_window_controls.sh status max",
+        "on-click": "bash ~/sway/waybar_window_controls.sh action max",
+        "interval": 1
+    },
+    "custom/win-close": {
+        "return-type": "json",
+        "exec": "bash ~/sway/waybar_window_controls.sh status close",
+        "on-click": "bash ~/sway/waybar_window_controls.sh action close",
+        "interval": 1
     },
     "cpu": { "format": " {usage}%" },
     "memory": { "format": "🎟 {}%" }
@@ -68,6 +86,9 @@ window#waybar {
 #network,
 #cpu,
 #memory,
+#custom-win-hide,
+#custom-win-max,
+#custom-win-close,
 #tray {
     background-color: rgba(48, 10, 36, 0.95);
     border: 1px solid rgba(233, 84, 32, 0.65);
@@ -79,6 +100,27 @@ window#waybar {
 #workspaces button.focused {
     background-color: #E95420;
     border-radius: 4px;
+}
+
+#custom-win-hide,
+#custom-win-max,
+#custom-win-close {
+    font-weight: bold;
+    min-width: 18px;
+}
+
+#custom-win-hide { color: #f6d365; }
+#custom-win-max { color: #8dd694; }
+#custom-win-close { color: #ff6b6b; }
+
+#custom-win-hide.hidden,
+#custom-win-max.hidden,
+#custom-win-close.hidden {
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
 }
 EOF
 
@@ -205,6 +247,18 @@ else
     echo "⚠️ janela_acoes.sh não encontrado no repositório. Menu de ações pode não funcionar."
 fi
 chmod +x ~/sway/janela_acoes.sh
+
+# 9. Script dos cards de controle de janela na Waybar
+if [ -f "$(dirname "$0")/waybar_window_controls.sh" ]; then
+    SRC_CTRL="$(readlink -f "$(dirname "$0")/waybar_window_controls.sh")"
+    DST_CTRL="$(readlink -f ~/sway/waybar_window_controls.sh 2>/dev/null || echo ~/sway/waybar_window_controls.sh)"
+    if [ "$SRC_CTRL" != "$DST_CTRL" ]; then
+        cp "$SRC_CTRL" ~/sway/waybar_window_controls.sh
+    fi
+else
+    echo "⚠️ waybar_window_controls.sh não encontrado no repositório. Cards de janela podem não funcionar."
+fi
+chmod +x ~/sway/waybar_window_controls.sh
 
 echo "✅ Customização aplicada!"
 echo "➡️ Use Super+Shift+C para recarregar no Sway (ou reinicie a sessão)."

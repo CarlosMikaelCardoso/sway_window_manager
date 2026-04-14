@@ -58,6 +58,7 @@ while true; do
 
 <i>Dica:</i> No seletor, digite para filtrar e pressione Enter para focar.
 <i>Se Alt+Shift+Tab não responder, use Alt+ISO_Left_Tab.</i>
+<i>Janelas escondidas aparecem como [escondida] e podem ser restauradas pelo Alt+Tab.</i>
 
 • <b>Super + Seta Esquerda</b> → Focar janela à esquerda
 • <b>Super + Seta Direita</b>  → Focar janela à direita
@@ -91,6 +92,14 @@ while true; do
 
 • <b>Super + Ctrl + B</b>    → Mostrar/Ocultar Waybar
 • <b>Super + H</b>           → Abrir este guia de atalhos
+
+<b>CARDS DE JANELA NA WAYBAR</b>
+
+• <b>—</b>                    → Esconder janela atual (scratchpad) | <b>Teclado:</b> Super + -
+• <b>▢</b>                    → Maximizar/Restaurar janela atual | <b>Teclado:</b> Super + F
+• <b>✕</b>                    → Fechar janela atual | <b>Teclado:</b> Super + Q
+
+<i>Os cards aparecem somente quando existir janela no workspace atual.</i>
 "
 		;;
 	"Captura de Tela")
