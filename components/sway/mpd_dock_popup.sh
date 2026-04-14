@@ -91,6 +91,11 @@ fi
 # Formatação Pango: Titulo grande, artista menor e cinza claro
 TEXT="<span font='18' weight='bold' color='#ffffff'>$TITLE</span>\n<span font='14' color='#a1a1a6'>$ARTIST</span>$PROGRESS"
 
+# --- INÍCIO DA MODIFICAÇÃO ---
+# Modificação: Correção da regra do swaymsg para usar o app_id correto ("mpd-popup") no Wayland.
+# Adicionado um pequeno sleep para garantir que o Sway registre a regra global de flutuação 
+# ANTES de a janela ser renderizada, impedindo que ela entre no modo tiling e empurre as outras.
+
 WIN_WIDTH=380
 
 # Determinar a posição do popup para aparecer abaixo do botão central da Waybar
@@ -100,10 +105,11 @@ if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     POS_Y=45 # Ajuste para ficar logo abaixo da Waybar
     
     # Aplica regra do Sway ANTES de abrir a janela. 
-    # Cobre tanto XWayland (class) quanto Wayland nativo (app_id 'yad' + title)
-    swaymsg "for_window [title=\"MPD Dock\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
-    swaymsg "for_window [app_id=\"yad\" title=\"MPD Dock\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    swaymsg "for_window [app_id=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
     swaymsg "for_window [class=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    
+    # Dá tempo (50ms) para o IPC do Sway registrar a regra antes de desenhar a janela
+    sleep 0.05
 fi
 
 set +e
@@ -120,6 +126,7 @@ GTK_THEME=Adwaita:dark yad --class="mpd-popup" --name="mpd-popup" --on-top --und
 
 ACTION_CODE=$?
 set -e
+# --- FIM DA MODIFICAÇÃO ---
 
 case "$ACTION_CODE" in
     10)
