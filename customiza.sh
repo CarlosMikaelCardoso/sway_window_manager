@@ -9,7 +9,7 @@ sudo apt update
 sudo apt install -y waybar wofi \
     fonts-font-awesome fonts-noto-color-emoji fonts-liberation \
     grim slurp pavucontrol blueman wdisplays network-manager-gnome \
-    zenity pulseaudio-utils dunst jq playerctl mpd mpc ncmpcpp
+    zenity yad pulseaudio-utils dunst jq playerctl mpd mpc ncmpcpp
 
 # 2. Criar pastas de config
 mkdir -p ~/.config/sway
@@ -76,7 +76,7 @@ cat <<EOF > ~/.config/waybar/config
     "custom/media": {
         "return-type": "json",
         "exec": "bash ~/sway/components/waybar/media_mpd.sh",
-        "on-click": "bash ~/sway/components/sway/mpd_dock_popup.sh",
+        "on-click": "bash ~/sway/components/sway/mpd_dock_popup.sh --single-instance",
         "on-click-right": "foot -e ncmpcpp",
         "on-scroll-up": "mpc next >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
         "on-scroll-down": "mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
@@ -256,7 +256,7 @@ bindsym XF86AudioNext exec sh -c 'mpc next >/dev/null 2>&1; pkill -RTMIN+10 wayb
 bindsym XF86AudioPrev exec sh -c 'mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
 bindsym XF86AudioStop exec sh -c 'mpc stop >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
 bindsym \$mod+m exec foot -e ncmpcpp
-bindsym \$mod+Shift+m exec bash ~/sway/components/sway/mpd_dock_popup.sh
+bindsym \$mod+Shift+m exec bash ~/sway/components/sway/mpd_dock_popup.sh --single-instance
 
 # Workspaces
 bindsym \$mod+1 workspace number 1
