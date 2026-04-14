@@ -110,7 +110,7 @@ fi
 # Formatação Pango: Titulo grande, artista menor e cinza claro
 TEXT="<span font='16' weight='bold' color='#ffffff'>$TITLE</span>\n<span font='12' color='#a1a1a6'>$ARTIST</span>$PROGRESS"
 
-WIN_WIDTH=380
+WIN_WIDTH=520
 WIN_HEIGHT=245
 POS_X=0
 POS_Y=46
@@ -150,7 +150,7 @@ if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
         ' | head -n1)"
 
         if [ -n "${WIN_ID:-}" ] && [ "$WIN_ID" != "null" ]; then
-            swaymsg "[con_id=$WIN_ID] floating enable, sticky enable, border none, move position $POS_X $POS_Y, resize set width $WIN_WIDTH" >/dev/null 2>&1 || true
+            swaymsg "[con_id=$WIN_ID] floating enable, sticky enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
             break
         fi
         sleep 0.03
