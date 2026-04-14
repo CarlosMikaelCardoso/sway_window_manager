@@ -33,25 +33,23 @@ fi
 
 systemctl --user start mpd >/dev/null 2>&1 || true
 
-
-# Modificação: Adicionado border-radius no CSS para visual macOS e corrigida a regra do swaymsg 
-# para usar o 'title="MPD Dock"' e 'border pixel 0', garantindo que flutue e remova as bordas laranjas nativas do WM.
-
 STYLE_FILE="/tmp/yad-mpd-dock.css"
 cat > "$STYLE_FILE" <<'CSS'
 * {
     font-family: "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Ubuntu", "Font Awesome 6 Free", sans-serif;
 }
-window, dialog, box {
-    background-color: rgba(20, 20, 20, 0.95) !important;
+window, window.background, #yad-dialog-window, dialog {
+    background-color: #1a1a1a !important;
+    border-radius: 16px !important;
     background-image: none !important;
-    border: none !important;
-    border-radius: 18px !important;
+}
+box {
+    background: transparent !important;
 }
 button {
     background-color: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
-    border-radius: 14px !important;
+    border-radius: 12px !important;
     border: none !important;
     padding: 12px 18px !important;
     margin: 10px 6px !important;
@@ -60,12 +58,10 @@ button {
 }
 button:hover {
     background-color: rgba(255, 255, 255, 0.2) !important;
-    border-radius: 24px !important;
 }
 label {
     color: #ffffff !important;
     background: transparent !important;
-    margin-top: 10px;
 }
 CSS
 
@@ -112,8 +108,28 @@ if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     POS_Y=45 # Ajuste para ficar logo abaixo da Waybar
     
     # Aplica regra do Sway ANTES de abrir a janela. Assim ela nasce direto no local, sem piscar no centro.
-    swaymsg "for_window [title=\"MPD Dock\"] floating enable, border pixel 0, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    swaymsg "for_window [title=\"MPD Dock\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    swaymsg "for_window [app_id=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    swaymsg "for_window [class=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
 fi
+
+set +e
+GTK_THEME=Adwaita:dark yad --class="mpd-popup" --on-top --undecorated --skip-taskbar --borders=20 \
+    --title="MPD Dock" \
+    --text="$TEXT" \
+    --image="multimedia-audio-player" \
+    --image-on-top \
+    --fixed --width=$WIN_WIDTH --height=220 \
+    --css="$STYLE_FILE" \
+    --button=":10" \
+    --button="$PLAY_PAUSE_ICON:20" \
+    --button=":30" \
+    --button=":50" \
+    --button="✕:1"
+
+ACTION_CODE=$?
+set -e
+# --- FIM DA MODIFICAÇÃO ---
 
 
 set +e
