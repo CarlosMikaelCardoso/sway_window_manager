@@ -1,3 +1,4 @@
+# --- INÍCIO DO CÓDIGO ---
 #!/bin/bash
 
 # Popup de controles MPD em estilo dock (macOS / Control Center)
@@ -37,31 +38,22 @@ STYLE_FILE="/tmp/yad-mpd-dock.css"
 cat > "$STYLE_FILE" <<'CSS'
 * {
     font-family: "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Ubuntu", "Font Awesome 6 Free", sans-serif;
-}
-window, window.background, #yad-dialog-window, dialog {
     background-color: #1a1a1a !important;
-    border-radius: 16px !important;
-    background-image: none !important;
+    color: #ffffff !important;
 }
-box {
-    background: transparent !important;
+window, dialog, box {
+    border-radius: 16px !important;
+    border: none !important;
 }
 button {
     background-color: rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
     border-radius: 12px !important;
-    border: none !important;
     padding: 12px 18px !important;
     margin: 10px 6px !important;
     font-size: 22px !important;
-    transition: all 0.2s ease-in-out !important;
 }
 button:hover {
     background-color: rgba(255, 255, 255, 0.2) !important;
-}
-label {
-    color: #ffffff !important;
-    background: transparent !important;
 }
 CSS
 
@@ -107,37 +99,17 @@ if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     POS_X=$(( (WIDTH - WIN_WIDTH) / 2 ))
     POS_Y=45 # Ajuste para ficar logo abaixo da Waybar
     
-    # Aplica regra do Sway ANTES de abrir a janela. Assim ela nasce direto no local, sem piscar no centro.
+    # Aplica regra do Sway ANTES de abrir a janela. 
+    # Cobre tanto XWayland (class) quanto Wayland nativo (app_id 'yad' + title)
     swaymsg "for_window [title=\"MPD Dock\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
-    swaymsg "for_window [app_id=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    swaymsg "for_window [app_id=\"yad\" title=\"MPD Dock\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
     swaymsg "for_window [class=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
 fi
 
 set +e
-GTK_THEME=Adwaita:dark yad --class="mpd-popup" --on-top --undecorated --skip-taskbar --borders=20 \
+GTK_THEME=Adwaita:dark yad --class="mpd-popup" --name="mpd-popup" --on-top --undecorated --skip-taskbar --borders=20 \
     --title="MPD Dock" \
     --text="$TEXT" \
-    --image="multimedia-audio-player" \
-    --image-on-top \
-    --fixed --width=$WIN_WIDTH --height=220 \
-    --css="$STYLE_FILE" \
-    --button=":10" \
-    --button="$PLAY_PAUSE_ICON:20" \
-    --button=":30" \
-    --button=":50" \
-    --button="✕:1"
-
-ACTION_CODE=$?
-set -e
-# --- FIM DA MODIFICAÇÃO ---
-
-
-set +e
-yad --class="mpd-popup" --on-top --undecorated --skip-taskbar --borders=20 \
-    --title="MPD Dock" \
-    --text="$TEXT" \
-    --image="multimedia-audio-player" \
-    --image-on-top \
     --fixed --width=$WIN_WIDTH --height=220 \
     --css="$STYLE_FILE" \
     --button=":10" \
@@ -165,3 +137,4 @@ case "$ACTION_CODE" in
 esac
 
 pkill -RTMIN+10 waybar >/dev/null 2>&1 || true
+# --- FIM DO CÓDIGO ---
