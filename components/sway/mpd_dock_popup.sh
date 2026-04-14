@@ -37,23 +37,32 @@ systemctl --user start mpd >/dev/null 2>&1 || true
 STYLE_FILE="/tmp/yad-mpd-dock.css"
 cat > "$STYLE_FILE" <<'CSS'
 * {
-    font-family: "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Ubuntu", "Font Awesome 6 Free", sans-serif;
-    background-color: #1a1a1a !important;
+    font-family: "SF Pro Display", "Segoe UI", "Ubuntu", "Font Awesome 6 Free", sans-serif;
+    background-color: transparent !important;
     color: #ffffff !important;
 }
 window, dialog, box {
-    border-radius: 16px !important;
+    background-color: rgba(24, 25, 28, 0.92) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45) !important;
+}
+label {
+    background-color: transparent !important;
     border: none !important;
 }
 button {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    border-radius: 12px !important;
-    padding: 12px 18px !important;
-    margin: 10px 6px !important;
-    font-size: 22px !important;
+    background-image: none !important;
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 14px !important;
+    padding: 12px 16px !important;
+    margin: 8px 5px !important;
+    font-size: 20px !important;
 }
 button:hover {
-    background-color: rgba(255, 255, 255, 0.2) !important;
+    background-color: rgba(255, 255, 255, 0.22) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
 }
 CSS
 
@@ -91,42 +100,56 @@ fi
 # Formatação Pango: Titulo grande, artista menor e cinza claro
 TEXT="<span font='18' weight='bold' color='#ffffff'>$TITLE</span>\n<span font='14' color='#a1a1a6'>$ARTIST</span>$PROGRESS"
 
-# --- INÍCIO DA MODIFICAÇÃO ---
-# Modificação: Correção da regra do swaymsg para usar o app_id correto ("mpd-popup") no Wayland.
-# Adicionado um pequeno sleep para garantir que o Sway registre a regra global de flutuação 
-# ANTES de a janela ser renderizada, impedindo que ela entre no modo tiling e empurre as outras.
+WIN_WIDTH=420
+WIN_HEIGHT=190
+POS_X=0
+POS_Y=46
 
-WIN_WIDTH=380
-
-# Determinar a posição do popup para aparecer abaixo do botão central da Waybar
 if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-    WIDTH=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .rect.width')
-    POS_X=$(( (WIDTH - WIN_WIDTH) / 2 ))
-    POS_Y=45 # Ajuste para ficar logo abaixo da Waybar
-    
-    # Aplica regra do Sway ANTES de abrir a janela. 
-    swaymsg "for_window [app_id=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
-    swaymsg "for_window [class=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
-    
-    # Dá tempo (50ms) para o IPC do Sway registrar a regra antes de desenhar a janela
-    sleep 0.05
+    OUTPUT_RECT_JSON="$(swaymsg -t get_outputs | jq -c '.[] | select(.focused) | .rect' | head -n1)"
+    if [ -n "${OUTPUT_RECT_JSON:-}" ] && [ "$OUTPUT_RECT_JSON" != "null" ]; then
+        OUT_X="$(printf '%s' "$OUTPUT_RECT_JSON" | jq -r '.x')"
+        OUT_Y="$(printf '%s' "$OUTPUT_RECT_JSON" | jq -r '.y')"
+        OUT_W="$(printf '%s' "$OUTPUT_RECT_JSON" | jq -r '.width')"
+        POS_X=$(( OUT_X + (OUT_W - WIN_WIDTH) / 2 ))
+        POS_Y=$(( OUT_Y + 44 ))
+    fi
 fi
 
 set +e
-GTK_THEME=Adwaita:dark yad --class="mpd-popup" --name="mpd-popup" --on-top --undecorated --skip-taskbar --borders=20 \
+GTK_THEME=Adwaita:dark yad --class="mpd-popup" --name="mpd-popup" --on-top --undecorated --skip-taskbar --borders=16 \
     --title="MPD Dock" \
     --text="$TEXT" \
-    --fixed --width=$WIN_WIDTH --height=220 \
+    --fixed --width=$WIN_WIDTH --height=$WIN_HEIGHT \
     --css="$STYLE_FILE" \
     --button=":10" \
     --button="$PLAY_PAUSE_ICON:20" \
     --button=":30" \
     --button=":50" \
-    --button="✕:1"
+    --button="✕:1" &
 
+YAD_PID=$!
+
+if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+    # Reposiciona assim que o container nasce para evitar quebrar o layout em tiling.
+    for _ in $(seq 1 20); do
+        WIN_ID="$(swaymsg -t get_tree | jq -r --argjson pid "$YAD_PID" '
+          .. | objects
+          | select(.pid? == $pid and .name? == "MPD Dock")
+          | .id
+        ' | head -n1)"
+
+        if [ -n "${WIN_ID:-}" ] && [ "$WIN_ID" != "null" ]; then
+            swaymsg "[con_id=$WIN_ID] floating enable, sticky enable, border none, move position $POS_X $POS_Y, resize set $WIN_WIDTH $WIN_HEIGHT" >/dev/null 2>&1 || true
+            break
+        fi
+        sleep 0.03
+    done
+fi
+
+wait "$YAD_PID"
 ACTION_CODE=$?
 set -e
-# --- FIM DA MODIFICAÇÃO ---
 
 case "$ACTION_CODE" in
     10)
