@@ -27,9 +27,9 @@ cat <<EOF > ~/.config/waybar/config
     "margin-right": 18,
     "height": 34,
     "on-sigusr1": "toggle",
-    "modules-left": ["sway/workspaces", "sway/mode"],
+    "modules-left": ["sway/workspaces", "sway/mode", "custom/win-hide", "custom/win-max", "custom/win-close"],
     "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "network", "cpu", "memory", "custom/win-hide", "custom/win-max", "custom/win-close", "tray"],
+    "modules-right": ["pulseaudio", "network", "cpu", "memory", "tray"],
     "sway/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
@@ -259,6 +259,56 @@ else
     echo "⚠️ waybar_window_controls.sh não encontrado no repositório. Cards de janela podem não funcionar."
 fi
 chmod +x ~/sway/waybar_window_controls.sh
+
+# 10. Correções do VS Code (clipboard/atalhos no Wayland)
+mkdir -p ~/.config/Code/User ~/.local/share/applications
+
+cat <<EOF > ~/.config/Code/User/keybindings.json
+[
+    {
+        "key": "ctrl+c",
+        "command": "editor.action.clipboardCopyAction",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+        "key": "ctrl+x",
+        "command": "editor.action.clipboardCutAction",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+        "key": "ctrl+v",
+        "command": "editor.action.clipboardPasteAction",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+        "key": "ctrl+c",
+        "command": "workbench.action.terminal.copySelection",
+        "when": "terminalFocus && terminalTextSelected"
+    },
+    {
+        "key": "ctrl+shift+v",
+        "command": "workbench.action.terminal.paste",
+        "when": "terminalFocus"
+    }
+]
+EOF
+
+# Launcher em Wayland para evitar problemas de teclado/clipboard no Sway
+if [ -x /snap/bin/code ]; then
+    cat <<EOF > ~/.local/share/applications/code-wayland.desktop
+[Desktop Entry]
+Name=Visual Studio Code (Wayland)
+Comment=Code Editing. Redefined.
+GenericName=Text Editor
+Exec=/snap/bin/code --ozone-platform=wayland %F
+Icon=code
+Type=Application
+StartupNotify=false
+StartupWMClass=Code
+Categories=TextEditor;Development;IDE;
+MimeType=text/plain;inode/directory;
+EOF
+fi
 
 echo "✅ Customização aplicada!"
 echo "➡️ Use Super+Shift+C para recarregar no Sway (ou reinicie a sessão)."
