@@ -56,79 +56,98 @@ mpc update >/dev/null 2>&1 || true
 
 # 3. Gerar configuração da Waybar (dock flutuante)
 cat <<EOF > ~/.config/waybar/config
-{
-    "layer": "top",
-    "exclusive": false,
-    "position": "top",
-    "margin-top": 6,
-    "margin-left": 18,
-    "margin-right": 18,
-    "height": 24,
-    "on-sigusr1": "toggle",
-    "modules-left": ["sway/workspaces", "sway/mode", "custom/win-hide", "custom/win-max", "custom/win-close"],
-    "modules-center": ["custom/clock", "custom/media"],
-    "modules-right": ["custom/audio", "custom/cpu", "custom/memory", "tray"],
-    "sway/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": true,
-        "format": "{name}"
+[
+    {
+        "name": "topbar",
+        "layer": "top",
+        "exclusive": true,
+        "position": "top",
+        "height": 32,
+        "modules-left": ["custom/win-hide", "custom/win-max", "custom/win-close", "sway/workspaces"],
+        "modules-center": ["custom/media"],
+        "modules-right": ["custom/audio", "custom/cpu", "custom/memory", "tray", "custom/clock"],
+        "sway/workspaces": {
+            "disable-scroll": true,
+            "all-outputs": true,
+            "format": "{name}"
+        },
+        "custom/media": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/media_mpd.sh",
+            "on-click": "bash ~/sway/components/sway/mpd_dock_popup.sh --single-instance",
+            "on-click-right": "foot -e ncmpcpp",
+            "on-scroll-up": "mpc next >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
+            "on-scroll-down": "mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
+            "signal": 10,
+            "interval": 2,
+            "tooltip": true
+        },
+        "custom/clock": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/clock.sh",
+            "interval": 1,
+            "tooltip": true
+        },
+        "custom/audio": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/audio.sh",
+            "on-click": "bash ~/sway/components/sway/volume_control.sh mute",
+            "signal": 9,
+            "interval": 10,
+            "tooltip": true
+        },
+        "custom/win-hide": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/window_controls.sh status hide",
+            "on-click": "bash ~/sway/components/waybar/window_controls.sh action hide",
+            "interval": 1
+        },
+        "custom/win-max": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/window_controls.sh status max",
+            "on-click": "bash ~/sway/components/waybar/window_controls.sh action max",
+            "interval": 1
+        },
+        "custom/win-close": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/window_controls.sh status close",
+            "on-click": "bash ~/sway/components/waybar/window_controls.sh action close",
+            "interval": 1
+        },
+        "custom/cpu": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/cpu.sh",
+            "interval": 2,
+            "tooltip": true
+        },
+        "custom/memory": {
+            "return-type": "json",
+            "exec": "bash ~/sway/components/waybar/memory.sh",
+            "interval": 2,
+            "tooltip": true
+        }
     },
-    "custom/media": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/media_mpd.sh",
-        "on-click": "bash ~/sway/components/sway/mpd_dock_popup.sh --single-instance",
-        "on-click-right": "foot -e ncmpcpp",
-        "on-scroll-up": "mpc next >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
-        "on-scroll-down": "mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
-        "signal": 10,
-        "interval": 2,
-        "tooltip": true
-    },
-    "custom/clock": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/clock.sh",
-        "interval": 1,
-        "tooltip": true
-    },
-    "custom/audio": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/audio.sh",
-        "on-click": "bash ~/sway/components/sway/volume_control.sh mute",
-        "signal": 9,
-        "interval": 10,
-        "tooltip": true
-    },
-    "custom/win-hide": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/window_controls.sh status hide",
-        "on-click": "bash ~/sway/components/waybar/window_controls.sh action hide",
-        "interval": 1
-    },
-    "custom/win-max": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/window_controls.sh status max",
-        "on-click": "bash ~/sway/components/waybar/window_controls.sh action max",
-        "interval": 1
-    },
-    "custom/win-close": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/window_controls.sh status close",
-        "on-click": "bash ~/sway/components/waybar/window_controls.sh action close",
-        "interval": 1
-    },
-    "custom/cpu": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/cpu.sh",
-        "interval": 2,
-        "tooltip": true
-    },
-    "custom/memory": {
-        "return-type": "json",
-        "exec": "bash ~/sway/components/waybar/memory.sh",
-        "interval": 2,
-        "tooltip": true
+    {
+        "name": "dock",
+        "layer": "top",
+        "mode": "hide",
+        "exclusive": false,
+        "position": "bottom",
+        "margin-bottom": 12,
+        "height": 56,
+        "modules-center": ["wlr/taskbar"],
+        "wlr/taskbar": {
+            "format": "{icon}",
+            "icon-size": 32,
+            "tooltip-format": "{title}",
+            "on-click": "activate",
+            "on-click-middle": "close",
+            "app_ids-mapping": {
+                "firefoxdeveloperedition": "firefox-developer-edition"
+            }
+        }
     }
-}
+]
 EOF
 
 # 4. Estilizar a Waybar em cards
@@ -136,9 +155,26 @@ cat <<EOF > ~/.config/waybar/style.css
 * {
     font-family: "Ubuntu", "Font Awesome 6 Free", sans-serif;
     font-size: 14px;
+    border: none;
+    border-radius: 0;
 }
-window#waybar {
-    background-color: rgba(0, 0, 0, 0);
+
+window#waybar.topbar {
+    background-color: rgba(30, 30, 30, 0.85);
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+window#waybar.dock {
+    background-color: transparent;
+    border: none;
+}
+
+window#waybar.dock .modules-center {
+    background-color: rgba(30, 30, 30, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 0 10px;
     color: #ffffff;
 }
 
@@ -147,40 +183,70 @@ window#waybar {
 #custom-audio,
 #custom-cpu,
 #custom-memory,
-#custom-win-hide,
-#custom-win-max,
-#custom-win-close,
 #tray {
-    background-color: rgba(48, 10, 36, 0.95);
-    border: 1px solid rgba(233, 84, 32, 0.65);
-    border-radius: 12px;
-    margin: 0 4px;
-    padding: 0 10px;
+    background-color: transparent;
+    margin: 0 2px;
+    padding: 0 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
 }
 
-#custom-media {
-    background-color: #66cc99;
-    color: #2b273f;
-    border-radius: 4px;
-    padding: 0 10px;
-    margin: 0 5px;
+#workspaces button {
+    padding: 0 8px;
+    background-color: transparent;
+    color: #ffffff;
+    border-radius: 8px;
 }
 
 #workspaces button.focused {
-    background-color: #E95420;
-    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+#workspaces button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#taskbar {
+    background-color: transparent;
+}
+
+#taskbar button {
+    padding: 4px 8px;
+    margin: 0 4px;
+    border-radius: 12px;
+    transition: background-color 0.2s ease;
+}
+
+#taskbar button.active {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+#taskbar button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#custom-media {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 0 12px;
+    margin: 4px 5px;
 }
 
 #custom-win-hide,
 #custom-win-max,
 #custom-win-close {
-    font-weight: bold;
-    min-width: 18px;
+    font-family: "Font Awesome 6 Free";
+    font-size: 16px;
+    min-width: 14px;
+    padding: 0 6px;
+    margin: 0 2px;
 }
 
-#custom-win-hide { color: #f6d365; }
-#custom-win-max { color: #8dd694; }
-#custom-win-close { color: #ff6b6b; }
+#custom-win-close { color: #ff5f56; }
+#custom-win-max { color: #27c93f; }
+#custom-win-hide { color: #ffbd2e; }
+
 #custom-audio { color: #cdb4db; }
 #custom-cpu { color: #a3be8c; }
 #custom-memory { color: #f2cc8f; }
