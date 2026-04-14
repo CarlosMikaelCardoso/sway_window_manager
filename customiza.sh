@@ -134,6 +134,10 @@ set \$menu wofi --show drun --allow-images
 client.focused #E95420 #E95420 #ffffff #E95420
 output * bg /usr/share/backgrounds/warty-final-ubuntu.png fill
 
+# Ambiente de sessão para D-Bus e portais (evita falha de start da Waybar)
+exec_always --no-startup-id dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
+exec_always --no-startup-id systemctl --user restart xdg-desktop-portal xdg-desktop-portal-wlr
+
 # Atalhos
 bindsym \$mod+Return exec \$term
 bindsym \$mod+q kill
@@ -181,7 +185,7 @@ bindsym \$mod+Shift+3 move container to workspace number 3
 bindsym \$mod+Shift+4 move container to workspace number 4
 bindsym \$mod+Shift+5 move container to workspace number 5
 
-# Iniciar Barra automaticamente
+# Iniciar Barra automaticamente (nativo do Sway)
 bar {
     swaybar_command waybar
 }
@@ -271,6 +275,9 @@ else
     echo "⚠️ waybar_net_speed.sh não encontrado no repositório. Módulo de velocidade pode não funcionar."
 fi
 chmod +x ~/sway/waybar_net_speed.sh
+
+# Remove script legado de startup para evitar confusão
+rm -f ~/sway/start_waybar.sh
 
 # 11. Correções do VS Code (clipboard/atalhos no Wayland)
 mkdir -p ~/.config/Code/User ~/.local/share/applications
