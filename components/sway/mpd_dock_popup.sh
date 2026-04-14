@@ -33,6 +33,10 @@ fi
 
 systemctl --user start mpd >/dev/null 2>&1 || true
 
+
+# Modificação: Adicionado border-radius no CSS para visual macOS e corrigida a regra do swaymsg 
+# para usar o 'title="MPD Dock"' e 'border pixel 0', garantindo que flutue e remova as bordas laranjas nativas do WM.
+
 STYLE_FILE="/tmp/yad-mpd-dock.css"
 cat > "$STYLE_FILE" <<'CSS'
 * {
@@ -42,6 +46,7 @@ window, dialog, box {
     background-color: rgba(20, 20, 20, 0.95) !important;
     background-image: none !important;
     border: none !important;
+    border-radius: 18px !important;
 }
 button {
     background-color: rgba(255, 255, 255, 0.08) !important;
@@ -107,9 +112,9 @@ if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     POS_Y=45 # Ajuste para ficar logo abaixo da Waybar
     
     # Aplica regra do Sway ANTES de abrir a janela. Assim ela nasce direto no local, sem piscar no centro.
-    swaymsg "for_window [app_id=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
-    swaymsg "for_window [class=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    swaymsg "for_window [title=\"MPD Dock\"] floating enable, border pixel 0, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
 fi
+
 
 set +e
 yad --class="mpd-popup" --on-top --undecorated --skip-taskbar --borders=20 \
