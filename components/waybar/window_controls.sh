@@ -2,8 +2,8 @@
 
 # Controle de ações de janela para módulos custom da Waybar
 # Uso:
-#   waybar_window_controls.sh status <hide|max|close>
-#   waybar_window_controls.sh action <hide|max|close>
+#   window_controls.sh status <hide|max|close>
+#   window_controls.sh action <hide|max|close>
 
 set -euo pipefail
 
@@ -25,11 +25,11 @@ get_focused_window_id() {
 }
 
 get_focused_fullscreen_mode() {
-        swaymsg -t get_tree | jq -r '
-            .. | objects
-            | select(.focused? == true and (.type? == "con" or .type? == "floating_con"))
-            | (.fullscreen_mode // 0)
-        ' | head -n1
+    swaymsg -t get_tree | jq -r '
+      .. | objects
+      | select(.focused? == true and (.type? == "con" or .type? == "floating_con"))
+      | (.fullscreen_mode // 0)
+    ' | head -n1
 }
 
 has_window_in_focused_workspace() {

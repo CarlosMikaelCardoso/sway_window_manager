@@ -93,6 +93,15 @@ while true; do
 • <b>Super + Ctrl + B</b>    → Mostrar/Ocultar Waybar
 • <b>Super + H</b>           → Abrir este guia de atalhos
 
+<b>MIDIA (MPD)</b>
+
+• <b>Super + M</b>           → Abrir ncmpcpp
+• <b>Super + Shift + M</b>   → Abrir menu MPD (musicas/playlists)
+• <b>Tecla Play/Pause</b>    → Pausar/Retomar
+• <b>Tecla Next/Prev</b>     → Proxima/Anterior
+
+<i>No card de midia:</i> clique abre menu, clique direito abre ncmpcpp, scroll troca faixa.
+
 <b>CARDS DE JANELA NA WAYBAR</b>
 
 • <b>—</b>                    → Esconder janela atual (scratchpad) | <b>Teclado:</b> Super + -

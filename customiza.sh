@@ -9,12 +9,50 @@ sudo apt update
 sudo apt install -y waybar wofi \
     fonts-font-awesome fonts-noto-color-emoji fonts-liberation \
     grim slurp pavucontrol blueman wdisplays network-manager-gnome \
-    zenity pulseaudio-utils dunst jq
+    zenity pulseaudio-utils dunst jq playerctl mpd mpc ncmpcpp
 
 # 2. Criar pastas de config
 mkdir -p ~/.config/sway
 mkdir -p ~/.config/waybar
-mkdir -p ~/sway
+mkdir -p ~/sway/components/sway ~/sway/components/waybar
+
+# 2.1 Configurar MPD (biblioteca local de músicas)
+MUSIC_DIR=""
+for CANDIDATE in "$HOME/Musicas" "$HOME/Música" "$HOME/Músicas" "$HOME/Music"; do
+    if [ -d "$CANDIDATE" ]; then
+        MUSIC_DIR="$CANDIDATE"
+        break
+    fi
+done
+
+if [ -z "$MUSIC_DIR" ]; then
+    MUSIC_DIR="$HOME/Musicas"
+    mkdir -p "$MUSIC_DIR"
+fi
+
+mkdir -p ~/.config/mpd/playlists ~/.config/mpd
+
+cat <<EOF > ~/.config/mpd/mpd.conf
+music_directory "$MUSIC_DIR"
+playlist_directory "~/.config/mpd/playlists"
+db_file "~/.config/mpd/database"
+log_file "~/.config/mpd/log"
+pid_file "~/.config/mpd/pid"
+state_file "~/.config/mpd/state"
+sticker_file "~/.config/mpd/sticker.sql"
+bind_to_address "127.0.0.1"
+port "6600"
+auto_update "yes"
+restore_paused "yes"
+
+audio_output {
+    type "pipewire"
+    name "PipeWire Sound Server"
+}
+EOF
+
+systemctl --user enable --now mpd >/dev/null 2>&1 || true
+mpc update >/dev/null 2>&1 || true
 
 # 3. Gerar configuração da Waybar (dock flutuante)
 cat <<EOF > ~/.config/waybar/config
@@ -22,50 +60,74 @@ cat <<EOF > ~/.config/waybar/config
     "layer": "top",
     "exclusive": false,
     "position": "top",
-    "margin-top": 10,
+    "margin-top": 6,
     "margin-left": 18,
     "margin-right": 18,
-    "height": 34,
+    "height": 24,
     "on-sigusr1": "toggle",
     "modules-left": ["sway/workspaces", "sway/mode", "custom/win-hide", "custom/win-max", "custom/win-close"],
-    "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "cpu", "memory", "tray"],
+    "modules-center": ["custom/clock", "custom/media"],
+    "modules-right": ["custom/audio", "custom/cpu", "custom/memory", "tray"],
     "sway/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
         "format": "{name}"
     },
-    "clock": {
-        "format": "{:%d/%m/%Y - %H:%M}",
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+    "custom/media": {
+        "return-type": "json",
+        "exec": "bash ~/sway/components/waybar/media_mpd.sh",
+        "on-click": "bash ~/sway/components/sway/mpd_menu.sh",
+        "on-click-right": "foot -e ncmpcpp",
+        "on-scroll-up": "mpc next >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
+        "on-scroll-down": "mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true",
+        "signal": 10,
+        "interval": 2,
+        "tooltip": true
     },
-    "pulseaudio": {
-        "format": "{icon} {volume}%",
-        "format-muted": "🔇",
-        "format-icons": {
-            "default": ["", "", ""]
-        }
+    "custom/clock": {
+        "return-type": "json",
+        "exec": "bash ~/sway/components/waybar/clock.sh",
+        "interval": 1,
+        "tooltip": true
+    },
+    "custom/audio": {
+        "return-type": "json",
+        "exec": "bash ~/sway/components/waybar/audio.sh",
+        "on-click": "bash ~/sway/components/sway/volume_control.sh mute",
+        "signal": 9,
+        "interval": 10,
+        "tooltip": true
     },
     "custom/win-hide": {
         "return-type": "json",
-        "exec": "bash ~/sway/waybar_window_controls.sh status hide",
-        "on-click": "bash ~/sway/waybar_window_controls.sh action hide",
+        "exec": "bash ~/sway/components/waybar/window_controls.sh status hide",
+        "on-click": "bash ~/sway/components/waybar/window_controls.sh action hide",
         "interval": 1
     },
     "custom/win-max": {
         "return-type": "json",
-        "exec": "bash ~/sway/waybar_window_controls.sh status max",
-        "on-click": "bash ~/sway/waybar_window_controls.sh action max",
+        "exec": "bash ~/sway/components/waybar/window_controls.sh status max",
+        "on-click": "bash ~/sway/components/waybar/window_controls.sh action max",
         "interval": 1
     },
     "custom/win-close": {
         "return-type": "json",
-        "exec": "bash ~/sway/waybar_window_controls.sh status close",
-        "on-click": "bash ~/sway/waybar_window_controls.sh action close",
+        "exec": "bash ~/sway/components/waybar/window_controls.sh status close",
+        "on-click": "bash ~/sway/components/waybar/window_controls.sh action close",
         "interval": 1
     },
-    "cpu": { "format": " {usage}%" },
-    "memory": { "format": "🎟 {}%" }
+    "custom/cpu": {
+        "return-type": "json",
+        "exec": "bash ~/sway/components/waybar/cpu.sh",
+        "interval": 2,
+        "tooltip": true
+    },
+    "custom/memory": {
+        "return-type": "json",
+        "exec": "bash ~/sway/components/waybar/memory.sh",
+        "interval": 2,
+        "tooltip": true
+    }
 }
 EOF
 
@@ -81,10 +143,10 @@ window#waybar {
 }
 
 #workspaces,
-#clock,
-#pulseaudio,
-#cpu,
-#memory,
+#custom-clock,
+#custom-audio,
+#custom-cpu,
+#custom-memory,
 #custom-win-hide,
 #custom-win-max,
 #custom-win-close,
@@ -94,6 +156,14 @@ window#waybar {
     border-radius: 12px;
     margin: 0 4px;
     padding: 0 10px;
+}
+
+#custom-media {
+    background-color: #66cc99;
+    color: #2b273f;
+    border-radius: 4px;
+    padding: 0 10px;
+    margin: 0 5px;
 }
 
 #workspaces button.focused {
@@ -111,7 +181,10 @@ window#waybar {
 #custom-win-hide { color: #f6d365; }
 #custom-win-max { color: #8dd694; }
 #custom-win-close { color: #ff6b6b; }
-#custom-net-speed { color: #8ecae6; }
+#custom-audio { color: #cdb4db; }
+#custom-cpu { color: #a3be8c; }
+#custom-memory { color: #f2cc8f; }
+#custom-clock { color: #bde0fe; }
 
 #custom-win-hide.hidden,
 #custom-win-max.hidden,
@@ -144,14 +217,14 @@ bindsym \$mod+q kill
 bindsym \$mod+d exec \$menu
 bindsym \$mod+Shift+c reload
 bindsym \$mod+Shift+e exec swaynag -t warning -m 'Sair?' -b 'Sim' 'swaymsg exit'
-bindsym \$mod+h exec bash ~/sway/help_atalhos.sh
+bindsym \$mod+h exec bash ~/sway/components/sway/help_atalhos.sh
 bindsym \$mod+Ctrl+b exec pkill -USR1 waybar
-bindsym \$mod+a exec bash ~/sway/janela_acoes.sh
+bindsym \$mod+a exec bash ~/sway/components/sway/janela_acoes.sh
 
 # Navegação de janelas (workspace atual)
-bindsym Mod1+Tab exec bash ~/sway/alt_tab_visual.sh next 300
-bindsym Mod1+Shift+Tab exec bash ~/sway/alt_tab_visual.sh prev 300
-bindsym Mod1+ISO_Left_Tab exec bash ~/sway/alt_tab_visual.sh prev 300
+bindsym Mod1+Tab exec bash ~/sway/components/sway/alt_tab_visual.sh next 300
+bindsym Mod1+Shift+Tab exec bash ~/sway/components/sway/alt_tab_visual.sh prev 300
+bindsym Mod1+ISO_Left_Tab exec bash ~/sway/components/sway/alt_tab_visual.sh prev 300
 bindsym \$mod+Left focus left
 bindsym \$mod+Right focus right
 bindsym \$mod+Up focus up
@@ -171,6 +244,19 @@ bindsym \$mod+equal scratchpad show
 bindsym Print exec mkdir -p ~/Imagens/prints && grim ~/Imagens/prints/print-\$(date +%Y-%m-%d_%H-%M-%S).png
 bindsym Shift+Print exec mkdir -p ~/Imagens/prints && grim -g "\$(slurp)" ~/Imagens/prints/print-area-\$(date +%Y-%m-%d_%H-%M-%S).png
 bindsym Ctrl+Print exec sh -c 'sleep 3; mkdir -p ~/Imagens/prints; grim ~/Imagens/prints/print-delay-\$(date +%Y-%m-%d_%H-%M-%S).png'
+
+# Volume (teclas multimidia/FN)
+bindsym XF86AudioRaiseVolume exec bash ~/sway/components/sway/volume_control.sh up
+bindsym XF86AudioLowerVolume exec bash ~/sway/components/sway/volume_control.sh down
+bindsym XF86AudioMute exec bash ~/sway/components/sway/volume_control.sh mute
+
+# Mídia (MPD)
+bindsym XF86AudioPlay exec sh -c 'mpc toggle >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
+bindsym XF86AudioNext exec sh -c 'mpc next >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
+bindsym XF86AudioPrev exec sh -c 'mpc prev >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
+bindsym XF86AudioStop exec sh -c 'mpc stop >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
+bindsym \$mod+m exec foot -e ncmpcpp
+bindsym \$mod+Shift+m exec bash ~/sway/components/sway/mpd_menu.sh
 
 # Workspaces
 bindsym \$mod+1 workspace number 1
@@ -201,7 +287,7 @@ focus_on_window_activation focus
 
 input "type:pointer" {
     accel_profile "flat"
-    pointer_accel -0.2
+    pointer_accel 0
     tap enabled
     natural_scroll disable
 }
@@ -216,70 +302,44 @@ gaps outer 2
 smart_borders on
 EOF
 
-# 6. Script de ajuda de atalhos (fonte única: arquivo do repositório)
-if [ -f "$(dirname "$0")/help_atalhos.sh" ]; then
-    SRC_HELP="$(readlink -f "$(dirname "$0")/help_atalhos.sh")"
-    DST_HELP="$(readlink -f ~/sway/help_atalhos.sh 2>/dev/null || echo ~/sway/help_atalhos.sh)"
-    if [ "$SRC_HELP" != "$DST_HELP" ]; then
-        cp "$SRC_HELP" ~/sway/help_atalhos.sh
-    fi
-else
-    echo "⚠️ help_atalhos.sh não encontrado no repositório. Mantendo configuração atual."
-fi
-chmod +x ~/sway/help_atalhos.sh
+# 6. Scripts de componentes do Sway
+copy_component() {
+    local src="$1"
+    local dst="$2"
 
-# 7. Script de Alt+Tab visual (fonte única: arquivo do repositório)
-if [ -f "$(dirname "$0")/alt_tab_visual.sh" ]; then
-    SRC_ALT="$(readlink -f "$(dirname "$0")/alt_tab_visual.sh")"
-    DST_ALT="$(readlink -f ~/sway/alt_tab_visual.sh 2>/dev/null || echo ~/sway/alt_tab_visual.sh)"
-    if [ "$SRC_ALT" != "$DST_ALT" ]; then
-        cp "$SRC_ALT" ~/sway/alt_tab_visual.sh
+    if [ -f "$src" ]; then
+        local src_abs dst_abs
+        src_abs="$(readlink -f "$src")"
+        dst_abs="$(readlink -f "$dst" 2>/dev/null || echo "$dst")"
+        if [ "$src_abs" != "$dst_abs" ]; then
+            cp "$src_abs" "$dst"
+        fi
+        chmod +x "$dst"
+    else
+        echo "⚠️ Componente não encontrado: $src"
     fi
-else
-    echo "⚠️ alt_tab_visual.sh não encontrado no repositório. Alt+Tab visual pode não funcionar."
-fi
-chmod +x ~/sway/alt_tab_visual.sh
+}
 
-# 8. Script de ações de janela (fonte única: arquivo do repositório)
-if [ -f "$(dirname "$0")/janela_acoes.sh" ]; then
-    SRC_WIN="$(readlink -f "$(dirname "$0")/janela_acoes.sh")"
-    DST_WIN="$(readlink -f ~/sway/janela_acoes.sh 2>/dev/null || echo ~/sway/janela_acoes.sh)"
-    if [ "$SRC_WIN" != "$DST_WIN" ]; then
-        cp "$SRC_WIN" ~/sway/janela_acoes.sh
-    fi
-else
-    echo "⚠️ janela_acoes.sh não encontrado no repositório. Menu de ações pode não funcionar."
-fi
-chmod +x ~/sway/janela_acoes.sh
+copy_component "$(dirname "$0")/components/sway/help_atalhos.sh" "$HOME/sway/components/sway/help_atalhos.sh"
+copy_component "$(dirname "$0")/components/sway/alt_tab_visual.sh" "$HOME/sway/components/sway/alt_tab_visual.sh"
+copy_component "$(dirname "$0")/components/sway/janela_acoes.sh" "$HOME/sway/components/sway/janela_acoes.sh"
+copy_component "$(dirname "$0")/components/sway/volume_control.sh" "$HOME/sway/components/sway/volume_control.sh"
+copy_component "$(dirname "$0")/components/sway/mpd_picker.sh" "$HOME/sway/components/sway/mpd_picker.sh"
+copy_component "$(dirname "$0")/components/sway/mpd_menu.sh" "$HOME/sway/components/sway/mpd_menu.sh"
 
-# 9. Script dos cards de controle de janela na Waybar
-if [ -f "$(dirname "$0")/waybar_window_controls.sh" ]; then
-    SRC_CTRL="$(readlink -f "$(dirname "$0")/waybar_window_controls.sh")"
-    DST_CTRL="$(readlink -f ~/sway/waybar_window_controls.sh 2>/dev/null || echo ~/sway/waybar_window_controls.sh)"
-    if [ "$SRC_CTRL" != "$DST_CTRL" ]; then
-        cp "$SRC_CTRL" ~/sway/waybar_window_controls.sh
-    fi
-else
-    echo "⚠️ waybar_window_controls.sh não encontrado no repositório. Cards de janela podem não funcionar."
-fi
-chmod +x ~/sway/waybar_window_controls.sh
-
-# 10. Script de velocidade de rede na Waybar
-if [ -f "$(dirname "$0")/waybar_net_speed.sh" ]; then
-    SRC_NET="$(readlink -f "$(dirname "$0")/waybar_net_speed.sh")"
-    DST_NET="$(readlink -f ~/sway/waybar_net_speed.sh 2>/dev/null || echo ~/sway/waybar_net_speed.sh)"
-    if [ "$SRC_NET" != "$DST_NET" ]; then
-        cp "$SRC_NET" ~/sway/waybar_net_speed.sh
-    fi
-else
-    echo "⚠️ waybar_net_speed.sh não encontrado no repositório. Módulo de velocidade pode não funcionar."
-fi
-chmod +x ~/sway/waybar_net_speed.sh
+# 7. Scripts de componentes da Waybar
+copy_component "$(dirname "$0")/components/waybar/window_controls.sh" "$HOME/sway/components/waybar/window_controls.sh"
+copy_component "$(dirname "$0")/components/waybar/net_speed.sh" "$HOME/sway/components/waybar/net_speed.sh"
+copy_component "$(dirname "$0")/components/waybar/clock.sh" "$HOME/sway/components/waybar/clock.sh"
+copy_component "$(dirname "$0")/components/waybar/audio.sh" "$HOME/sway/components/waybar/audio.sh"
+copy_component "$(dirname "$0")/components/waybar/media_mpd.sh" "$HOME/sway/components/waybar/media_mpd.sh"
+copy_component "$(dirname "$0")/components/waybar/cpu.sh" "$HOME/sway/components/waybar/cpu.sh"
+copy_component "$(dirname "$0")/components/waybar/memory.sh" "$HOME/sway/components/waybar/memory.sh"
 
 # Remove script legado de startup para evitar confusão
 rm -f ~/sway/start_waybar.sh
 
-# 11. Correções do VS Code (clipboard/atalhos no Wayland)
+# 8. Correções do VS Code (clipboard/atalhos no Wayland)
 mkdir -p ~/.config/Code/User ~/.local/share/applications
 
 cat <<EOF > ~/.config/Code/User/keybindings.json
