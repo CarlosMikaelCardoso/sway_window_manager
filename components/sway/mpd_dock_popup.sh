@@ -54,8 +54,8 @@ button {
     background-color: rgba(255, 255, 255, 0.12) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 14px !important;
-    padding: 12px 16px !important;
-    margin: 8px 5px !important;
+    padding: 8px 12px !important;
+    margin: 4px 4px !important;
     font-size: 20px !important;
 }
 button:hover {
@@ -64,8 +64,20 @@ button:hover {
 }
 CSS
 
+RAW_FILE="$(mpc current -f '%file%' 2>/dev/null || true)"
 TITLE="$(mpc current -f '%title%' 2>/dev/null || true)"
 ARTIST="$(mpc current -f '%artist%' 2>/dev/null || true)"
+
+if [ -z "$TITLE" ] && [ -n "$RAW_FILE" ]; then
+    TITLE="$(basename "$RAW_FILE")"
+    TITLE="${TITLE%.*}"                       # remove extensão
+    TITLE="${TITLE#*. }"                      # remove prefixo tipo "47. "
+    TITLE="$(printf '%s' "$TITLE" | sed -E 's/-[A-Za-z0-9_-]{8,}$//')"  # remove sufixo ID
+fi
+
+if [ -z "$ARTIST" ]; then
+    ARTIST="Artista desconhecido"
+fi
 
 if [ -z "$TITLE" ]; then
     TITLE="Nenhuma Mídia"
@@ -96,10 +108,10 @@ if printf '%s' "$STATE_LINE" | grep -q '\['; then
 fi
 
 # Formatação Pango: Titulo grande, artista menor e cinza claro
-TEXT="<span font='18' weight='bold' color='#ffffff'>$TITLE</span>\n<span font='14' color='#a1a1a6'>$ARTIST</span>$PROGRESS"
+TEXT="<span font='16' weight='bold' color='#ffffff'>$TITLE</span>\n<span font='12' color='#a1a1a6'>$ARTIST</span>$PROGRESS"
 
-WIN_WIDTH=420
-WIN_HEIGHT=190
+WIN_WIDTH=380
+WIN_HEIGHT=245
 POS_X=0
 POS_Y=46
 
@@ -115,10 +127,10 @@ if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
 fi
 
 set +e
-GTK_THEME=Adwaita:dark yad --class="mpd-popup" --name="mpd-popup" --on-top --undecorated --skip-taskbar --borders=16 \
+GTK_THEME=Adwaita:dark yad --class="mpd-popup" --name="mpd-popup" --on-top --undecorated --skip-taskbar --borders=10 \
     --title="MPD Dock" \
     --text="$TEXT" \
-    --fixed --width=$WIN_WIDTH --height=$WIN_HEIGHT \
+    --width=$WIN_WIDTH --height=$WIN_HEIGHT \
     --css="$STYLE_FILE" \
     --button=":10" \
     --button="$PLAY_PAUSE_ICON:20" \
@@ -138,7 +150,7 @@ if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
         ' | head -n1)"
 
         if [ -n "${WIN_ID:-}" ] && [ "$WIN_ID" != "null" ]; then
-            swaymsg "[con_id=$WIN_ID] floating enable, sticky enable, border none, move position $POS_X $POS_Y, resize set $WIN_WIDTH $WIN_HEIGHT" >/dev/null 2>&1 || true
+            swaymsg "[con_id=$WIN_ID] floating enable, sticky enable, border none, move position $POS_X $POS_Y, resize set width $WIN_WIDTH" >/dev/null 2>&1 || true
             break
         fi
         sleep 0.03

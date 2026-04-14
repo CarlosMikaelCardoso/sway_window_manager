@@ -323,7 +323,7 @@ bindsym XF86AudioPrev exec sh -c 'mpc prev >/dev/null 2>&1; pkill -RTMIN+10 wayb
 bindsym XF86AudioStop exec sh -c 'mpc stop >/dev/null 2>&1; pkill -RTMIN+10 waybar >/dev/null 2>&1 || true'
 bindsym \$mod+m exec foot -e ncmpcpp
 bindsym \$mod+Shift+m exec bash ~/sway/components/sway/mpd_dock_popup.sh --single-instance
-
+for_window [title="MPD Dock"] floating enable, sticky enable, border none
 # Workspaces
 bindsym \$mod+1 workspace number 1
 bindsym \$mod+2 workspace number 2
