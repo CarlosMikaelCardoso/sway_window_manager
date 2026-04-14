@@ -5,7 +5,11 @@
 set -euo pipefail
 
 notify() {
-    notify-send "MPD" "$1" >/dev/null 2>&1 || true
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "MPD" "$1" >/dev/null 2>&1 || true
+    else
+        zenity --info --title='MPD' --text="$1" --width=360 --height=120 >/dev/null 2>&1 || true
+    fi
 }
 
 refresh_waybar() {
@@ -61,7 +65,14 @@ load_playlist() {
     local pls pick
     pls="$(mpc lsplaylists 2>/dev/null || true)"
     if [ -z "${pls:-}" ]; then
-        notify "Nenhuma playlist salva"
+        if zenity --question \
+            --title='Carregar playlist' \
+            --text='Nenhuma playlist salva ainda.\n\nDeseja escolher uma musica agora para montar a primeira playlist?' \
+            --ok-label='Sim' --cancel-label='Nao' \
+            --width=500 >/dev/null 2>&1; then
+            pick_song
+            save_playlist
+        fi
         return 0
     fi
 
