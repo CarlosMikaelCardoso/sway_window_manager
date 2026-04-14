@@ -38,27 +38,29 @@ cat > "$STYLE_FILE" <<'CSS'
 * {
     font-family: "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Ubuntu", "Font Awesome 6 Free", sans-serif;
 }
-#yad-dialog-window {
-    background-color: rgba(24, 24, 24, 0.95);
-    border-radius: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+window, dialog, box {
+    background-color: rgba(20, 20, 20, 0.95) !important;
+    background-image: none !important;
+    border: none !important;
 }
 button {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-    border-radius: 24px;
-    border: none;
-    padding: 16px 20px;
-    margin: 0 6px;
-    font-size: 22px;
-    transition: all 0.2s ease-in-out;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    border-radius: 14px !important;
+    border: none !important;
+    padding: 12px 18px !important;
+    margin: 10px 6px !important;
+    font-size: 22px !important;
+    transition: all 0.2s ease-in-out !important;
 }
 button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 24px !important;
 }
 label {
-    color: #ffffff;
+    color: #ffffff !important;
+    background: transparent !important;
+    margin-top: 10px;
 }
 CSS
 
@@ -86,39 +88,41 @@ elif ! printf '%s' "$STATE_LINE" | grep -q '\[playing\]'; then
     PLAY_PAUSE_ICON=""
 fi
 
+PROGRESS=""
+if printf '%s' "$STATE_LINE" | grep -q '\['; then
+    TIME_INFO="$(printf '%s' "$STATE_LINE" | awk '{print $3}')"
+    PCT_INFO="$(printf '%s' "$STATE_LINE" | awk '{print $4}')"
+    PROGRESS="\n\n<span font='11' color='#888888'>$TIME_INFO   $PCT_INFO</span>"
+fi
+
 # Formatação Pango: Titulo grande, artista menor e cinza claro
-TEXT="<span font='18' weight='bold' color='#ffffff'>$TITLE</span>\n<span font='14' color='#a1a1a6'>$ARTIST</span>"
+TEXT="<span font='18' weight='bold' color='#ffffff'>$TITLE</span>\n<span font='14' color='#a1a1a6'>$ARTIST</span>$PROGRESS"
+
+WIN_WIDTH=380
 
 # Determinar a posição do popup para aparecer abaixo do botão central da Waybar
 if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-    (
-        for _ in {1..20}; do
-            if swaymsg -t get_tree | grep -E -q '"app_id": "mpd-popup"|"class": "mpd-popup"'; then
-                WIDTH=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .rect.width')
-                WIN_WIDTH=340
-                POS_X=$(( (WIDTH - WIN_WIDTH) / 2 ))
-                POS_Y=45 # Ajuste para ficar logo abaixo da Waybar
-                swaymsg "[app_id=\"mpd-popup\"] floating enable, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
-                swaymsg "[class=\"mpd-popup\"] floating enable, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
-                break
-            fi
-            sleep 0.1
-        done
-    ) &
+    WIDTH=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .rect.width')
+    POS_X=$(( (WIDTH - WIN_WIDTH) / 2 ))
+    POS_Y=45 # Ajuste para ficar logo abaixo da Waybar
+    
+    # Aplica regra do Sway ANTES de abrir a janela. Assim ela nasce direto no local, sem piscar no centro.
+    swaymsg "for_window [app_id=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
+    swaymsg "for_window [class=\"mpd-popup\"] floating enable, border none, move position $POS_X $POS_Y" >/dev/null 2>&1 || true
 fi
 
 set +e
-yad --class="mpd-popup" --on-top --undecorated --skip-taskbar --borders=24 \
+yad --class="mpd-popup" --on-top --undecorated --skip-taskbar --borders=20 \
     --title="MPD Dock" \
     --text="$TEXT" \
     --image="multimedia-audio-player" \
     --image-on-top \
-    --fixed --width=340 --height=200 \
+    --fixed --width=$WIN_WIDTH --height=220 \
     --css="$STYLE_FILE" \
     --button=":10" \
     --button="$PLAY_PAUSE_ICON:20" \
     --button=":30" \
-    --button="🎵:50" \
+    --button=":50" \
     --button="✕:1"
 
 ACTION_CODE=$?
