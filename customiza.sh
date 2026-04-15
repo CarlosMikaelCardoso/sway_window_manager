@@ -335,7 +335,7 @@ input "type:pointer" {
 # Apps em background
 exec nm-applet --indicator
 exec dunst
-exec_always nwg-dock -d
+exec_always nwg-dock 
 
 # Bordas arredondadas (simuladas por gaps)
 gaps inner 8
