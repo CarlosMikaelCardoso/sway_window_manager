@@ -103,8 +103,8 @@ fi
 PROGRESS=""
 if printf '%s' "$STATE_LINE" | grep -q '\['; then
     TIME_INFO="$(printf '%s' "$STATE_LINE" | awk '{print $3}')"
-    PCT_INFO="$(printf '%s' "$STATE_LINE" | awk '{print $4}')"
-    PROGRESS="\n\n<span font='11' color='#888888'>$TIME_INFO   $PCT_INFO</span>"
+    # PCT_INFO="$(printf '%s' "$STATE_LINE" | awk '{print $4}')"
+    PROGRESS="\n\n<span font='11' color='#888888'>$TIME_INFO</span>" #$     PCT_INFO
 fi
 
 # Formatação Pango: Titulo grande, artista menor e cinza claro

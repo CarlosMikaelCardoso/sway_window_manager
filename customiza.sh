@@ -9,12 +9,38 @@ sudo apt update
 sudo apt install -y waybar wofi \
     fonts-font-awesome fonts-noto-color-emoji fonts-liberation \
     grim slurp pavucontrol blueman wdisplays network-manager-gnome \
-    zenity yad pulseaudio-utils dunst jq playerctl mpd mpc ncmpcpp
+    zenity yad pulseaudio-utils dunst jq playerctl mpd mpc ncmpcpp papirus-icon-theme \
+    golang libgtk-3-dev libgtk-layer-shell-dev pkg-config git make
+
+# 1.1 Instalar nwg-dock a partir do código fonte (não presente no apt padrão)
+if ! command -v nwg-dock >/dev/null 2>&1; then
+    echo "🔨 Compilando nwg-dock do zero..."
+    git clone https://github.com/nwg-piotr/nwg-dock.git /tmp/nwg-dock
+    cd /tmp/nwg-dock
+    make
+    make build
+    sudo make install
+    cd - >/dev/null
+    rm -rf /tmp/nwg-dock
+fi
 
 # 2. Criar pastas de config
 mkdir -p ~/.config/sway
 mkdir -p ~/.config/waybar
 mkdir -p ~/sway/components/sway ~/sway/components/waybar
+mkdir -p ~/.config/gtk-3.0
+
+# 2.0 Forçar tema de ícones GTK (Resolve ícones faltando / "X" no nwg-dock)
+cat <<EOF > ~/.config/gtk-3.0/settings.ini
+[Settings]
+gtk-icon-theme-name=Papirus-Dark
+gtk-theme-name=Adwaita-dark
+gtk-application-prefer-dark-theme=1
+EOF
+
+# Aplicar o tema diretamente no dconf/gsettings (necessário para o nwg-dock e apps GTK)
+gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
+gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
 
 # 2.1 Configurar MPD (biblioteca local de músicas)
 MUSIC_DIR=""
@@ -126,26 +152,6 @@ cat <<EOF > ~/.config/waybar/config
             "interval": 2,
             "tooltip": true
         }
-    },
-    {
-        "name": "dock",
-        "layer": "top",
-        "mode": "hide",
-        "exclusive": false,
-        "position": "bottom",
-        "margin-bottom": 12,
-        "height": 56,
-        "modules-center": ["wlr/taskbar"],
-        "wlr/taskbar": {
-            "format": "{icon}",
-            "icon-size": 32,
-            "tooltip-format": "{title}",
-            "on-click": "activate",
-            "on-click-middle": "close",
-            "app_ids-mapping": {
-                "firefoxdeveloperedition": "firefox-developer-edition"
-            }
-        }
     }
 ]
 EOF
@@ -163,19 +169,6 @@ window#waybar.topbar {
     background-color: rgba(30, 30, 30, 0.85);
     color: #ffffff;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-window#waybar.dock {
-    background-color: transparent;
-    border: none;
-}
-
-window#waybar.dock .modules-center {
-    background-color: rgba(30, 30, 30, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    padding: 0 10px;
-    color: #ffffff;
 }
 
 #workspaces,
@@ -206,31 +199,11 @@ window#waybar.dock .modules-center {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-#taskbar {
-    background-color: transparent;
-}
-
-#taskbar button {
-    padding: 4px 8px;
-    margin: 0 4px;
-    border-radius: 12px;
-    transition: background-color 0.2s ease;
-}
-
-#taskbar button.active {
-    background-color: rgba(255, 255, 255, 0.15);
-}
-
-#taskbar button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
 #custom-media {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: transparent;
     color: #ffffff;
-    border-radius: 8px;
-    padding: 0 12px;
-    margin: 4px 5px;
+    padding: 0 10px;
+    margin: 4px 8px;
 }
 
 #custom-win-hide,
@@ -324,6 +297,7 @@ bindsym XF86AudioStop exec sh -c 'mpc stop >/dev/null 2>&1; pkill -RTMIN+10 wayb
 bindsym \$mod+m exec foot -e ncmpcpp
 bindsym \$mod+Shift+m exec bash ~/sway/components/sway/mpd_dock_popup.sh --single-instance
 for_window [title="MPD Dock"] floating enable, sticky enable, border none
+
 # Workspaces
 bindsym \$mod+1 workspace number 1
 bindsym \$mod+2 workspace number 2
@@ -361,6 +335,7 @@ input "type:pointer" {
 # Apps em background
 exec nm-applet --indicator
 exec dunst
+exec_always nwg-dock -d
 
 # Bordas arredondadas (simuladas por gaps)
 gaps inner 8
@@ -441,19 +416,24 @@ EOF
 
 # Launcher em Wayland para evitar problemas de teclado/clipboard no Sway
 if [ -x /snap/bin/code ]; then
-    cat <<EOF > ~/.local/share/applications/code-wayland.desktop
+    rm -f ~/.local/share/applications/code-wayland.desktop
+    # Nomeamos como code-url-handler.desktop para o nwg-dock reconhecer o app_id do VS Code
+    cat <<EOF > ~/.local/share/applications/code-url-handler.desktop
 [Desktop Entry]
 Name=Visual Studio Code (Wayland)
 Comment=Code Editing. Redefined.
 GenericName=Text Editor
 Exec=/snap/bin/code --ozone-platform=wayland %F
-Icon=code
+Icon=visual-studio-code
 Type=Application
 StartupNotify=false
-StartupWMClass=Code
+StartupWMClass=code-url-handler
 Categories=TextEditor;Development;IDE;
 MimeType=text/plain;inode/directory;
 EOF
+
+    # Atualiza o cache do desktop para o nwg-dock ler a correção instantaneamente
+    update-desktop-database ~/.local/share/applications >/dev/null 2>&1 || true
 fi
 
 echo "✅ Customização aplicada!"

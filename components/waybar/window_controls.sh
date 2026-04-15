@@ -57,14 +57,14 @@ status_output() {
     fi
 
     case "$KIND" in
+        close)
+            echo '{"text":"●","tooltip":"Fechar janela atual"}'
+            ;;
         hide)
-            echo '{"text":"—","tooltip":"Esconder janela atual"}'
+            echo '{"text":"●","tooltip":"Esconder janela atual"}'
             ;;
         max)
-            echo '{"text":"▢","tooltip":"Maximizar/Restaurar janela atual"}'
-            ;;
-        close)
-            echo '{"text":"✕","tooltip":"Fechar janela atual"}'
+            echo '{"text":"●","tooltip":"Maximizar/Restaurar janela atual"}'
             ;;
         *)
             echo '{"text":"","class":"hidden"}'

@@ -46,7 +46,7 @@ if printf '%s' "$STATE_LINE" | grep -q '\[playing\]'; then
     ICON=""
 elif printf '%s' "$STATE_LINE" | grep -q '\[paused\]'; then
     CLASS="paused"
-    ICON=""
+    ICON="ㅤ"
 fi
 
 if [ "${#TITLE}" -gt 42 ]; then
