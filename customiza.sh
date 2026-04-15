@@ -353,7 +353,7 @@ input "type:pointer" {
 # Apps em background
 exec nm-applet --indicator
 exec dunst
-exec_always sh -c 'pkill -x nwg-dock; sleep 0.2; nwg-dock -i 36 -mb 12 -ml 12 -mr 12'
+exec_always sh -c 'pkill -x nwg-dock; sleep 0.2; nwg-dock -d -i 36 -mb 12 -ml 12 -mr 12'
 
 # Bordas arredondadas (simuladas por gaps)
 gaps inner 8
