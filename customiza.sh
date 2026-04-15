@@ -88,13 +88,13 @@ window {
 }
 button {
     padding: 12px 16px; /* Aumenta a altura e largura da "bolha" ao redor do ícone */
-    margin: 8px 4px 4px 4px; /* Espaçamento padrão */
-    background: transparent;
+    margin: 8px 4px 16px 4px; /* 16px bottom = espaço padrão + 12px de flutuação */
+    background: rgba(30, 30, 30, 0.8);
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 button:hover {
-    margin: 2px 4px 10px 4px; /* Faz o ícone dar um "pulo" para cima ao passar o mouse */
-    background-color: rgba(255, 255, 255, 0.15);
+    margin: 2px 4px 22px 4px; /* Faz o ícone dar um "pulo" mantendo a flutuação */
+    background-color: rgba(255, 255, 255, 0.4);
 }
 EOF
 
@@ -353,7 +353,7 @@ input "type:pointer" {
 # Apps em background
 exec nm-applet --indicator
 exec dunst
-exec_always sh -c 'pkill -x nwg-dock; sleep 0.2; nwg-dock -d -i 36 -mb 12 -ml 12 -mr 12'
+exec_always sh -c 'pkill -x nwg-dock; sleep 0.2; nwg-dock -d -i 36 -mb 0 -ml 12 -mr 12'
 
 # Bordas arredondadas (simuladas por gaps)
 gaps inner 8
