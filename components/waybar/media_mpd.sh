@@ -14,14 +14,27 @@ if ! mpc status >/dev/null 2>&1; then
     exit 0
 fi
 
+RAW_FILE="$(mpc current -f '%file%' 2>/dev/null || true)"
+TITLE="$(mpc current -f '%title%' 2>/dev/null || true)"
+ARTIST="$(mpc current -f '%artist%' 2>/dev/null || true)"
+
+if [ -z "$TITLE" ] && [ -n "$RAW_FILE" ]; then
+    TITLE="$(basename "$RAW_FILE")"
+    TITLE="${TITLE%.*}"                       # remove extensão
+    TITLE="${TITLE#*. }"                      # remove prefixo tipo "47. "
+    TITLE="$(printf '%s' "$TITLE" | sed -E 's/-[A-Za-z0-9_-]{8,}$//')"  # remove sufixo ID
+fi
+
 STATE_LINE="$(mpc status | sed -n '2p' || true)"
 CURRENT="$(mpc current -f '%artist% - %title%' 2>/dev/null || true)"
 
-if [ -z "${CURRENT:-}" ]; then
+if [ -z "${TITLE:-}" ]; then
+    TITLE="Nenhuma Mídia"
+    ARTIST="MPD Parado"
     CURRENT="$(mpc current -f '%file%' 2>/dev/null || true)"
 fi
 
-if [ -z "${CURRENT:-}" ]; then
+if [ -z "${TITLE:-}" ]; then
     echo '{"text":" Sem musica","class":"stopped","tooltip":"Clique para abrir popup dock"}'
     exit 0
 fi
@@ -36,12 +49,17 @@ elif printf '%s' "$STATE_LINE" | grep -q '\[paused\]'; then
     ICON=""
 fi
 
-if [ "${#CURRENT}" -gt 42 ]; then
-    CURRENT="${CURRENT:0:39}..."
+if [ "${#TITLE}" -gt 42 ]; then
+    TITLE="${TITLE:0:39}..."
 fi
 
-TEXT="$ICON $CURRENT"
-TOOLTIP="MPD\n$CURRENT\nClique: popup dock de controle\nBotao direito: ncmpcpp\nScroll: proxima/anterior"
+TEXT="$ICON $TITLE"
+    TOOLTIP="MPD
+    Artista: $ARTIST
+    Musica: $TITLE
+    Clique: popup dock de controle 
+    Botao direito: ncmpcpp
+    Scroll: proxima/anterior"
 
 if command -v jq >/dev/null 2>&1; then
     jq -cn --arg text "$TEXT" --arg tooltip "$TOOLTIP" --arg class "$CLASS" '{text:$text, tooltip:$tooltip, class:$class}'
