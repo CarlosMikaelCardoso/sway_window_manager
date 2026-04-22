@@ -1,15 +1,31 @@
 #!/bin/bash
 
 # Alternância visual de janelas no Sway com Wofi
-# Uso: alt_tab_visual.sh [next|prev] [cooldown_ms]
+# Uso: alt_tab_visual.sh [next|prev|quick] [cooldown_ms]
 
 set -euo pipefail
 
 DIRECTION="${1:-next}"
 COOLDOWN_MS="${2:-300}"
 
-if [ "$DIRECTION" != "next" ] && [ "$DIRECTION" != "prev" ]; then
+if [ "$DIRECTION" != "next" ] && [ "$DIRECTION" != "prev" ] && [ "$DIRECTION" != "quick" ]; then
     DIRECTION="next"
+fi
+
+if [ "$DIRECTION" = "quick" ]; then
+    # Modificação: Corrigida a lógica para descobrir o workspace atual e buscar a segunda janela na lista de histórico de foco do Sway
+    CURRENT_WORKSPACE="$(swaymsg -t get_workspaces | jq -r '.[] | select(.focused==true) | .name' | head -n1)"
+    
+    PREV_ID="$(swaymsg -t get_tree | jq -r --arg ws "$CURRENT_WORKSPACE" '
+        .. | objects 
+        | select(.type? == "workspace" and .name? == $ws) 
+        | .focus[1] // empty
+    ')"
+    
+    if [ -n "$PREV_ID" ] && [ "$PREV_ID" != "null" ]; then
+        swaymsg "[con_id=$PREV_ID] focus" >/dev/null
+    fi
+    exit 0
 fi
 
 if ! [[ "$COOLDOWN_MS" =~ ^[0-9]+$ ]]; then

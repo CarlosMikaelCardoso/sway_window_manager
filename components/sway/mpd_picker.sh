@@ -32,4 +32,8 @@ fi
 mpc clear >/dev/null 2>&1 || true
 mpc add "$CHOICE" >/dev/null 2>&1 || true
 mpc play >/dev/null 2>&1 || true
+
+# Aguarda a estabilização do estado do MPD antes de forçar o refresh da barra
+sleep 0.2
 pkill -RTMIN+10 waybar >/dev/null 2>&1 || true
+mpc refresh >/dev/null 2>&1 || true

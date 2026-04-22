@@ -136,6 +136,8 @@ cat <<EOF > ~/.config/waybar/config
             "return-type": "json",
             "exec": "bash ~/sway/components/waybar/audio.sh",
             "on-click": "bash ~/sway/components/sway/volume_control.sh mute",
+            "on-scroll-up": "bash ~/sway/components/sway/volume_control.sh up",
+            "on-scroll-down": "bash ~/sway/components/sway/volume_control.sh down",
             "signal": 9,
             "interval": 10,
             "tooltip": true
@@ -279,8 +281,8 @@ bindsym \$mod+Ctrl+b exec pkill -USR1 waybar
 bindsym \$mod+a exec bash ~/sway/components/sway/janela_acoes.sh
 
 # Navegação de janelas (workspace atual)
-bindsym Mod1+Tab exec bash ~/sway/components/sway/alt_tab_visual.sh next 300
-bindsym Mod1+Shift+Tab exec bash ~/sway/components/sway/alt_tab_visual.sh prev 300
+bindsym Mod1+Tab exec bash ~/sway/components/sway/alt_tab_visual.sh quick
+bindsym Mod1+Shift+Tab exec bash ~/sway/components/sway/alt_tab_visual.sh next 300
 bindsym Mod1+ISO_Left_Tab exec bash ~/sway/components/sway/alt_tab_visual.sh prev 300
 bindsym \$mod+Left focus left
 bindsym \$mod+Right focus right
@@ -292,6 +294,9 @@ bindsym \$mod+Shift+Up move up
 bindsym \$mod+Shift+Down move down
 
 # Ações de janela (estilo produtividade)
+for_window [app_id=".*"] floating enable
+for_window [class=".*"] floating enable
+
 bindsym \$mod+Shift+space floating toggle
 bindsym \$mod+f fullscreen toggle
 bindsym \$mod+minus move scratchpad
@@ -353,7 +358,7 @@ input "type:pointer" {
 # Apps em background
 exec nm-applet --indicator
 exec dunst
-exec_always sh -c 'pkill -x nwg-dock; sleep 0.2; nwg-dock -d -i 36 -mb 0 -ml 12 -mr 12'
+exec_always sh -c 'pkill -x nwg-dock; sleep 0.2; nwg-dock -d -f -i 36 -mb 0'
 
 # Bordas arredondadas (simuladas por gaps)
 gaps inner 8
